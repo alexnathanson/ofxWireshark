@@ -1,4 +1,5 @@
 # ofxWireshark
+* An openFrameworks wrapper for tshark.
 
 # Setup Instructions
 * Install Wireshark https://www.wireshark.org/
