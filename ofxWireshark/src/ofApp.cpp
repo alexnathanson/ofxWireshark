@@ -2,11 +2,11 @@
 
 //--------------------------------------------------------------
 void ofApp::setup() {
-	systemResponse = "Nothing yet";
-	interfacesList = "Nothing yet";
-
 	threadOn = false;
 
+	myShark.setup("We up");
+	interfacesList =  myShark.networkInterfaces;
+	systemResponse = myShark.systemStream;
 }
 
 //--------------------------------------------------------------
@@ -17,10 +17,10 @@ void ofApp::update() {
 	https://osqa-ask.wireshark.org/questions/38939/pipe-tshark-output-to-java-program
 	*/
 	//std::cin >> systemResponse;
-
+	systemResponse = myShark.systemStream;
 }
 
-
+/*
 void ofApp::threadedFunction() {
 	tshark();
 
@@ -36,7 +36,7 @@ void ofApp::threadedFunction() {
 		//tsharkInterfaces();
 
 	}
-}
+}*/
 
 //--------------------------------------------------------------
 void ofApp::draw() {
@@ -50,21 +50,12 @@ void ofApp::draw() {
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key) {
 	switch (key) {
-	case 't':
-		tshark();
-		break;
-	case 'i':
-		tsharkInterfaces();
-		break;
-	case 'd':
-		dumpcap();
-		break;
 	case 's':
-		startThread();
+		myShark.startThread();
 		threadOn = true;
 		break;
 	case 'e':
-		stopThread();
+		myShark.stopThread();
 		threadOn = false;
 		break;
 	}
@@ -119,7 +110,7 @@ void ofApp::gotMessage(ofMessage msg) {
 void ofApp::dragEvent(ofDragInfo dragInfo) {
 
 }
-
+/*
 void ofApp::tshark() {
 	string tsharkPath = "C:\\\"Program Files\"\\Wireshark && tshark ";
 	string options = "-c 1000 -P"; //packet count
@@ -149,10 +140,10 @@ void ofApp::tsharkInterfaces() {
 	ofSystem(tsharkCmd);
 	//interfacesList = ofSystem(tsharkCmd);
 	//ofLogNotice(systemResponse);
-}
+}*/
 
 void ofApp::exit() {
 	if (threadOn) {
-		stopThread();
+		myShark.stopThread();
 	}
 }

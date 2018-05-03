@@ -1,8 +1,9 @@
 #pragma once
 
 #include "ofMain.h"
+#include "sharkThread.h"
 
-class ofApp : public ofBaseApp, public ofThread {
+class ofApp : public ofBaseApp {
 
 public:
 	void setup();
@@ -22,21 +23,13 @@ public:
 	void gotMessage(ofMessage msg);
 	void exit();
 
-	void tshark();
-	void tsharkInterfaces();
 	string systemResponse;
 	string interfacesList;
 
 	string consoleBuffer;
-	void dumpcap();
 
 	bool threadOn;
 
-	//ofThread sharkThread;
-
-	void threadedFunction();
-	//bool isThreadRunning;
-	ofBuffer consoleBuf;
-
+	sharkThread myShark;
 
 };
