@@ -1,6 +1,7 @@
 # ofxWireshark
 
-
+# Setup Instructions
+* Install Wireshark https://www.wireshark.org/
 
 # Using Wireshark in Terminal
 * https://www.wireshark.org/docs/wsug_html_chunked/AppToolstshark.html
