@@ -23,6 +23,7 @@ public:
 	void gotMessage(ofMessage msg);
 	void exit();
 
+	ofFile dataFile;
 	string systemResponse;
 	string interfacesList;
 
@@ -32,4 +33,7 @@ public:
 
 	sharkThread myShark;
 
+	void getData();
+
+	vector<string> linesOfData;
 };

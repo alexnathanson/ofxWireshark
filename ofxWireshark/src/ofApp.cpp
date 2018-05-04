@@ -7,6 +7,9 @@ void ofApp::setup() {
 	myShark.setup("We up");
 	interfacesList =  myShark.networkInterfaces;
 	systemResponse = myShark.systemStream;
+
+	
+
 }
 
 //--------------------------------------------------------------
@@ -17,7 +20,10 @@ void ofApp::update() {
 	https://osqa-ask.wireshark.org/questions/38939/pipe-tshark-output-to-java-program
 	*/
 	//std::cin >> systemResponse;
-	systemResponse = myShark.systemStream;
+
+	//if (dataFile.exists()) {
+		systemResponse = myShark.systemStream;
+	//}
 }
 
 /*
@@ -53,10 +59,15 @@ void ofApp::keyPressed(int key) {
 	case 's':
 		myShark.startThread();
 		threadOn = true;
+		dataFile.path() = myShark.writeFullPath;
+		ofLogNotice("file location", myShark.writeFullPath);
 		break;
 	case 'e':
 		myShark.stopThread();
 		threadOn = false;
+		break;
+	case 'p':
+		myShark.startShark = false;
 		break;
 	}
 }
@@ -145,5 +156,35 @@ void ofApp::tsharkInterfaces() {
 void ofApp::exit() {
 	if (threadOn) {
 		myShark.stopThread();
+	}
+}
+
+
+void ofApp::getData() {
+
+	//if (writeFullPath.getSize())
+	ofBuffer buffer = ofBufferFromFile(myShark.writeFullPath);
+	//int oldTextLines;
+
+	if (buffer.size()) {
+
+		//	if (buffer.getLines().end() != lastLine) {
+		//oldTextLines = buffer.size();
+		//		lastLine = buffer.getLines().end();
+		//	linesOfData.clear();
+		for (ofBuffer::Line it = buffer.getLines().begin(), end = buffer.getLines().end(); it != end; ++it) {
+
+			string line = *it;
+
+			// copy the line to draw later
+			// make sure its not a empty line
+			if (line.empty() == false) {
+				linesOfData.push_back(line);
+			}
+
+			// print out the line
+			systemResponse = linesOfData[linesOfData.size()];
+		}
+		//	}
 	}
 }
