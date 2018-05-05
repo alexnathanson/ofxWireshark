@@ -174,10 +174,12 @@
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
+    <ClCompile Include="src\dataThread.cpp" />
     <ClCompile Include="src\sharkThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ofApp.h" />
+    <ClInclude Include="src\dataThread.h" />
     <ClInclude Include="src\sharkThread.h" />
   </ItemGroup>
   <ItemGroup>

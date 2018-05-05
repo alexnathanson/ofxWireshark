@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "sharkThread.h"
+#include "dataThread.h"
 
 class ofApp : public ofBaseApp {
 
@@ -32,8 +33,13 @@ public:
 	bool threadOn;
 
 	sharkThread myShark;
+	dataThread myData;
 
-	void getData();
+	//void getData();
 
-	vector<string> linesOfData;
+	vector< vector <string> > dataLines;
+
+	vector<ofPoint> dataPoints;
+
+	vector<vector <string> > sortedData;
 };

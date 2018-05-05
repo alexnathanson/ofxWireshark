@@ -2,6 +2,15 @@
 #include "ofThread.h"
 #include "ofBaseApp.h" //didn't list ofBaseApp as the base class when setting up the shark class...
 
+/*
+resources
+https://www.wireshark.org/lists/wireshark-users/200811/msg00012.html
+https://osqa-ask.wireshark.org/questions/38939/pipe-tshark-output-to-java-program
+
+file format
+Number, time, source, destination, protocol, length, info
+*/
+
 class sharkThread : public ofThread
 {
 
@@ -36,8 +45,7 @@ public:
 
 		startShark = false;
 
-		writeTo = "tsharkData" + ofToString(ofGetElapsedTimeMillis);
-
+		writeTo = "tsharkData" + ofToString(currentDate()) + "_" + ofToString(currentTime());
 	}
 
 	void threadedFunction() {
@@ -63,6 +71,9 @@ public:
 			//std::cout << systemResponse << endl;
 			//tsharkInterfaces();
 
+			//necessary?
+			ofSleepMillis(30);
+
 		}
 	}
 
@@ -79,7 +90,8 @@ public:
 
 	void tshark() {
 		string tsharkPath = "C:\\\"Program Files\"\\Wireshark && tshark ";
-		string options = " -g -l -W n "; //packet count
+		string options = " -c 10 -N m -g -l -W n "; //packet count
+		//string filters = "-f "predef:MyPredefinedHostOnlyFilter"";
 		writeFullPath = "\"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\" + writeTo +".txt\"";
 		string tsharkCmd = "cd " + tsharkPath + options + " > " + writeFullPath; // double ">>" would append the file
 		ofLogNotice("cmd", tsharkCmd);
@@ -98,49 +110,41 @@ public:
 	}
 
 	void pingTest() {
-		//ofSystem("ping 127.0.0.1");
 		ofLogNotice() << "pinging now" << endl;
 		ofLogNotice() << ofSystem("ping 127.0.0.1");
 	}
 
 	void readText() {
-		//ofBuffer textBuffer = ofBufferFromFile(writeFullPath);
-		//int oldTextLines;
-		//if (textBuffer.getLines > oldTextLines) {
-		//	oldTextLines = textBuffer.getLines;
-
-		//	linesOfData.clear();
-		//	for (int line = 0; line < textBuffer.size(); line++) {
-		//		//systemStream = line;
-		//		linesOfData.push_back(textBuffer.getLines()[lines]);
-		//	}
-		//}
-
-		//if (writeFullPath.getSize())
+		
 		ofBuffer buffer = ofBufferFromFile(writeFullPath);
-		//int oldTextLines;
 
 		if (buffer.size()) {
-			
-		//	if (buffer.getLines().end() != lastLine) {
-					//oldTextLines = buffer.size();
-		//		lastLine = buffer.getLines().end();
-				//	linesOfData.clear();
-				for (ofBuffer::Line it = buffer.getLines().begin(), end = buffer.getLines().end(); it != end; ++it) {
+		
+			for (ofBuffer::Line it = buffer.getLines().begin(), end = buffer.getLines().end(); it != end; ++it) {
 
-					string line = *it;
+				string line = *it;
 
-					// copy the line to draw later
-					// make sure its not a empty line
-					if (line.empty() == false) {
-						linesOfData.push_back(line);
-					}
-
-					// print out the line
-					systemStream = linesOfData[linesOfData.size()];
+				// copy the line to draw later
+				// make sure its not a empty line
+				if (line.empty() == false) {
+					linesOfData.push_back(line);
 				}
-		//	}
+
+				// print out the line
+				systemStream = linesOfData[linesOfData.size()];
+			}
 		}
+	}
+
+
+	int currentDate() {
+		int date = (ofGetYear() * 10000) + (ofGetMonth() * 100) + ofGetDay();
+		return date;
+	}
+
+	int currentTime() {
+		int time = (ofGetHours() * 10000) + (ofGetMinutes() * 100) + ofGetSeconds();
+		return time;
 	}
 };
 

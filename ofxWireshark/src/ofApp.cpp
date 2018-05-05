@@ -4,6 +4,9 @@
 void ofApp::setup() {
 	threadOn = false;
 
+	myData.setup();
+	myData.startThread();
+
 	myShark.setup("We up");
 	interfacesList =  myShark.networkInterfaces;
 	systemResponse = myShark.systemStream;
@@ -14,35 +17,45 @@ void ofApp::setup() {
 
 //--------------------------------------------------------------
 void ofApp::update() {
-	/*
-	resources
-	https://www.wireshark.org/lists/wireshark-users/200811/msg00012.html
-	https://osqa-ask.wireshark.org/questions/38939/pipe-tshark-output-to-java-program
-	*/
-	//std::cin >> systemResponse;
 
-	//if (dataFile.exists()) {
-		systemResponse = myShark.systemStream;
-	//}
-}
+	/*vector<string> newVec;
+	newVec.clear();*/
 
-/*
-void ofApp::threadedFunction() {
-	tshark();
+	if (myData.loaded) {
+		dataLines.clear();
 
-	while (isThreadRunning()) {
+		//std::cout << myData.linesOfData[0] << endl;
+		//std::cout << myData.linesOfData[0] << endl;
+		//newVec = ofSplitString(myData.linesOfData[0], " ");
+		
+		//erase spaces 
+		/*for (int test2 = newVec.size() - 1; test2 > -1 ; test2--) {
+			if (newVec[test2].empty()) {
+				newVec.erase(newVec.begin() + test2);
+			}	
+		}*/
+		
+		//split the string into a vector by spaces
+		for (int ve = 0; ve < myData.linesOfData.size(); ve++) {
+			dataLines.push_back(ofSplitString(myData.linesOfData[ve], " ")); 
+		}
 
-		//std::cin << "test" <<"\n";
-		std::getline(std::cin, consoleBuffer);
+		//remove empty vectors
+		for (int lre = 0; lre < dataLines.size(); lre++) {
+			for (int re = dataLines[lre].size() - 1; re > -1; re--) {
+				if (dataLines[lre][re].empty()) {
+					dataLines[lre].erase(dataLines[lre].begin() + re);
+				}
+			}
+		}
 
-		systemResponse = consoleBuffer;
-		//consoleBuf.getLines(std::istream);
-		//std::cin >> systemResponse;
-		//std::cout << systemResponse << endl;
-		//tsharkInterfaces();
-
+		ofLogNotice("test");
+		for (int test = 0; test < dataLines[0].size(); test++) {
+			std::cout << dataLines[0][test] << endl;
+		}
+		myData.loaded = false;
 	}
-}*/
+}
 
 //--------------------------------------------------------------
 void ofApp::draw() {
@@ -68,6 +81,9 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'p':
 		myShark.startShark = false;
+		break;
+	case 'r':
+		myData.startThread();
 		break;
 	}
 }
@@ -159,20 +175,28 @@ void ofApp::exit() {
 	}
 }
 
-
+/*
 void ofApp::getData() {
 
 	//if (writeFullPath.getSize())
-	ofBuffer buffer = ofBufferFromFile(myShark.writeFullPath);
-	//int oldTextLines;
 
-	if (buffer.size()) {
+// reading files via ofFile or ofBuffer is not the same format as using ofSystem to interact with files
+	string fileLocation = "C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\tsharkData000000014000CC7A.txt";
+	ofLogNotice() << "Reading Data from " << fileLocation << endl;
+
+	ofBuffer myBuffer = ofBufferFromFile(fileLocation);// myShark.writeFullPath);
+
+	//cout << myBuffer.getText(); // let's see what it says
+
+	int totalLines;
+
+	if (myBuffer.size()) {
 
 		//	if (buffer.getLines().end() != lastLine) {
 		//oldTextLines = buffer.size();
 		//		lastLine = buffer.getLines().end();
 		//	linesOfData.clear();
-		for (ofBuffer::Line it = buffer.getLines().begin(), end = buffer.getLines().end(); it != end; ++it) {
+		for (ofBuffer::Line it = myBuffer.getLines().begin(), end = myBuffer.getLines().end(); it != end; ++it) {
 
 			string line = *it;
 
@@ -181,10 +205,25 @@ void ofApp::getData() {
 			if (line.empty() == false) {
 				linesOfData.push_back(line);
 			}
-
-			// print out the line
-			systemResponse = linesOfData[linesOfData.size()];
 		}
+
+		//throw out the last line of data, because it may be partial (only necessary if reading and writing data simultanously)
+		linesOfData.erase(linesOfData.end() - 1);
+		totalLines = linesOfData.size();
+
+		ofLogNotice("Data Lines: " + ofToString(totalLines));
+
+		// print out the line
+		systemResponse = linesOfData[linesOfData.size() - 2];
+		ofLogNotice("2nd to last", systemResponse);
+
+		systemResponse = linesOfData[linesOfData.size() - 1];
+		ofLogNotice("Last", systemResponse);
+
 		//	}
 	}
-}
+	else {
+		ofLogNotice() << "Buffer does not contain anything" << endl;
+	}
+	
+}*/
