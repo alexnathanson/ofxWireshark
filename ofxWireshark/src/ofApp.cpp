@@ -11,49 +11,22 @@ void ofApp::setup() {
 	interfacesList =  myShark.networkInterfaces;
 	systemResponse = myShark.systemStream;
 
-	
+	hasPoints = false;
 
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
 
-	/*vector<string> newVec;
-	newVec.clear();*/
-
 	if (myData.loaded) {
-		dataLines.clear();
-
-		//std::cout << myData.linesOfData[0] << endl;
-		//std::cout << myData.linesOfData[0] << endl;
-		//newVec = ofSplitString(myData.linesOfData[0], " ");
-		
-		//erase spaces 
-		/*for (int test2 = newVec.size() - 1; test2 > -1 ; test2--) {
-			if (newVec[test2].empty()) {
-				newVec.erase(newVec.begin() + test2);
-			}	
-		}*/
-		
-		//split the string into a vector by spaces
-		for (int ve = 0; ve < myData.linesOfData.size(); ve++) {
-			dataLines.push_back(ofSplitString(myData.linesOfData[ve], " ")); 
-		}
-
-		//remove empty vectors
-		for (int lre = 0; lre < dataLines.size(); lre++) {
-			for (int re = dataLines[lre].size() - 1; re > -1; re--) {
-				if (dataLines[lre][re].empty()) {
-					dataLines[lre].erase(dataLines[lre].begin() + re);
-				}
-			}
-		}
-
-		ofLogNotice("test");
-		for (int test = 0; test < dataLines[0].size(); test++) {
-			std::cout << dataLines[0][test] << endl;
-		}
+		sortData();
 		myData.loaded = false;
+
+		uniqueIP(dataLines);
+
+		assignPoints(uIP.size());
+
+		hasPoints = true;
 	}
 }
 
@@ -64,6 +37,13 @@ void ofApp::draw() {
 
 	ofSetColor(ofColor::darkBlue);
 	ofDrawBitmapString(systemResponse, 20, 400);
+
+	ofSetColor(ofColor::orangeRed);
+	if (hasPoints) {
+		drawPoints(ipPoint);
+		drawStrings(ipPoint);
+	}
+	
 }
 
 //--------------------------------------------------------------
@@ -137,37 +117,6 @@ void ofApp::gotMessage(ofMessage msg) {
 void ofApp::dragEvent(ofDragInfo dragInfo) {
 
 }
-/*
-void ofApp::tshark() {
-	string tsharkPath = "C:\\\"Program Files\"\\Wireshark && tshark ";
-	string options = "-c 1000 -P"; //packet count
-	string fileName = "testfile" + ofToString(ofGetElapsedTimeMillis);
-	string writeFile = " > \"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\bin\\data\\" + fileName + ".pcap\"";
-	string tsharkCmd = "cd " + tsharkPath + options + " >> cout";// +writeFile;
-	ofLogNotice("cmd", tsharkCmd);
-	systemResponse = ofSystem(tsharkCmd);
-	ofLogNotice(systemResponse);
-}
-
-void ofApp::dumpcap() {
-	string tsharkPath = "C:\\\"Program Files\"\\Wireshark && tshark ";
-
-	//string writeFile = " -w \"C:\\Users\\Alex Nathanson\\Documents\\wireshark\\" + fileName + ".pcap\"";
-	string tsharkCmd = "cd " + tsharkPath + " -I stdout";
-	//ofLogNotice("cmd", tsharkCmd);
-	ofSystem(tsharkCmd);
-	ofLogNotice(systemResponse);
-}
-
-void ofApp::tsharkInterfaces() {
-	string tsharkPath = "cd C:\\\"Program Files\"\\Wireshark && tshark";
-	//ofLogNotice("tsharkPath", tsharkPath);
-	string option = "-D";
-	string tsharkCmd = tsharkPath + " " + option;
-	ofSystem(tsharkCmd);
-	//interfacesList = ofSystem(tsharkCmd);
-	//ofLogNotice(systemResponse);
-}*/
 
 void ofApp::exit() {
 	if (threadOn) {
@@ -175,55 +124,102 @@ void ofApp::exit() {
 	}
 }
 
-/*
-void ofApp::getData() {
+void ofApp::sortData() {
+	dataLines.clear();
 
-	//if (writeFullPath.getSize())
+	//split the string into a vector by spaces
+	for (int ve = 0; ve < myData.linesOfData.size(); ve++) {
+		dataLines.push_back(ofSplitString(myData.linesOfData[ve], " "));
+	}
 
-// reading files via ofFile or ofBuffer is not the same format as using ofSystem to interact with files
-	string fileLocation = "C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\tsharkData000000014000CC7A.txt";
-	ofLogNotice() << "Reading Data from " << fileLocation << endl;
-
-	ofBuffer myBuffer = ofBufferFromFile(fileLocation);// myShark.writeFullPath);
-
-	//cout << myBuffer.getText(); // let's see what it says
-
-	int totalLines;
-
-	if (myBuffer.size()) {
-
-		//	if (buffer.getLines().end() != lastLine) {
-		//oldTextLines = buffer.size();
-		//		lastLine = buffer.getLines().end();
-		//	linesOfData.clear();
-		for (ofBuffer::Line it = myBuffer.getLines().begin(), end = myBuffer.getLines().end(); it != end; ++it) {
-
-			string line = *it;
-
-			// copy the line to draw later
-			// make sure its not a empty line
-			if (line.empty() == false) {
-				linesOfData.push_back(line);
+	//remove empty vectors
+	for (int lre = 0; lre < dataLines.size(); lre++) {
+		for (int re = dataLines[lre].size() - 1; re > -1; re--) {
+			if (dataLines[lre][re].empty()) {
+				dataLines[lre].erase(dataLines[lre].begin() + re);
 			}
 		}
-
-		//throw out the last line of data, because it may be partial (only necessary if reading and writing data simultanously)
-		linesOfData.erase(linesOfData.end() - 1);
-		totalLines = linesOfData.size();
-
-		ofLogNotice("Data Lines: " + ofToString(totalLines));
-
-		// print out the line
-		systemResponse = linesOfData[linesOfData.size() - 2];
-		ofLogNotice("2nd to last", systemResponse);
-
-		systemResponse = linesOfData[linesOfData.size() - 1];
-		ofLogNotice("Last", systemResponse);
-
-		//	}
 	}
-	else {
-		ofLogNotice() << "Buffer does not contain anything" << endl;
-	}
+
+	//should add in a way to reassamble things that we split by accident like multiword phrases inside of []
 	
-}*/
+	/*
+	ofLogNotice("Test");
+	int teeest = 7;
+	for (int test = 0; test < dataLines[teeest].size(); test++) {
+		std::cout << dataLines[teeest][test] << endl;
+	}*/
+	
+}
+
+void ofApp::uniqueIP(vector< vector<string> > uipInput) {
+	uIP.clear();
+	bool isUnique = true;
+	int wIP;
+
+	std::cout << uipInput[0][2] << endl;
+	std::cout << uipInput[0][4] << endl;
+
+	//loop through input
+	for (int u1 = 0; u1 < uipInput.size(); u1++) {
+		//loop through existing ip and check against input
+		wIP = 2;
+		for (int u2 = 0; u2 < uIP.size(); u2++) {
+			if (uIP[u2] == uipInput[u1][2]) {
+				isUnique = false;
+				break;
+			}
+		}
+		if (isUnique) {
+			uIP.push_back(uipInput[u1][wIP]);
+		}
+		isUnique = true;	
+
+		wIP = 4;
+		for (int u2 = 0; u2 < uIP.size(); u2++) {
+			if (uIP[u2] == uipInput[u1][4]) {
+				isUnique = false;
+				break;
+			}
+		}
+		if (isUnique) {
+			uIP.push_back(uipInput[u1][wIP]);
+		}
+		isUnique = true;
+	}
+
+	//print results
+	for(int j = 0; j < uIP.size(); j++) {
+		std::cout << uIP[j] << endl;
+	}
+}
+
+void ofApp::assignPoints(int amtPoints) {
+	ipPoint.clear();
+
+	for (int aP = 0; aP < amtPoints; aP++) {
+		int x = ofRandom(ofGetWidth());
+		int y = ofRandom(ofGetHeight());
+		
+		ofPoint thisPoint(x, y, 0);
+		ipPoint.push_back(thisPoint);
+	}
+
+	for (int tes = 0; tes < ipPoint.size(); tes++) {
+		std::cout << ipPoint[tes][0] << endl;
+	}
+}
+
+void ofApp::drawPoints(vector <ofPoint> drawPoints) {
+	for (int p = 0; p < drawPoints.size(); p++) {
+		ofDrawEllipse(drawPoints[p], 5, 5);
+	}
+}
+
+
+void ofApp::drawStrings(vector <ofPoint> drawPoints) {
+	for (int p = 0; p < drawPoints.size(); p++) {
+		ofDrawBitmapString(uIP[p], drawPoints[p]);
+
+	}
+}

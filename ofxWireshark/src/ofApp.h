@@ -32,6 +32,8 @@ public:
 
 	bool threadOn;
 
+	bool hasPoints;
+
 	sharkThread myShark;
 	dataThread myData;
 
@@ -41,5 +43,15 @@ public:
 
 	vector<ofPoint> dataPoints;
 
-	vector<vector <string> > sortedData;
+	//vector<vector <string> > sortedData;
+
+	void sortData();
+	void uniqueIP(vector< vector<string> > uipInput);
+	vector<string> uIP;
+	vector <ofPoint> ipPoint;
+	void assignPoints(int amtPoints);
+	void drawPoints(vector <ofPoint> drawPoints);
+	void drawStrings(vector <ofPoint> drawPoints);
+
+
 };
