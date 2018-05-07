@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include "sharkThread.h"
 #include "dataThread.h"
+#include "ofxGui.h"
 
 class ofApp : public ofBaseApp {
 
@@ -23,6 +24,12 @@ public:
 	void dragEvent(ofDragInfo dragInfo);
 	void gotMessage(ofMessage msg);
 	void exit();
+
+	ofxPanel gui;
+	void setupGui();
+	ofxToggle	mode;
+	ofxToggle	limitCapture;
+	ofxIntSlider	captureSize;
 
 	ofFile dataFile;
 	string systemResponse;
@@ -52,6 +59,8 @@ public:
 	void assignPoints(int amtPoints);
 	void drawPoints(vector <ofPoint> drawPoints);
 	void drawStrings(vector <ofPoint> drawPoints);
+	void drawConnections();
 
+	bool listen;
 
 };

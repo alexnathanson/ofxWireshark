@@ -34,8 +34,11 @@ public:
 
 	//ofBuffer::Line lastLine;
 
-	void setup(string isUp) {
-		ofLogNotice("Thread: ", isUp);
+	string cOpt;
+	bool cBool;
+
+	void setup(bool cB, int cO) {
+		ofLogNotice("Thread started");
 		//networkInterfaces = tsharkInterfaces();
 		//ofLogNotice("returned", networkInterfaces);
 
@@ -44,6 +47,9 @@ public:
 		tsharkInterfaces();
 
 		startShark = false;
+
+		cBool = cB;
+		cOpt = ofToString(cO);
 
 		writeTo = "tsharkData" + ofToString(currentDate()) + "_" + ofToString(currentTime());
 	}
@@ -57,7 +63,7 @@ public:
 			startShark = true;
 		}
 
-		while (isThreadRunning()) {
+		//while (isThreadRunning()) {
 
 			//readText();
 			
@@ -72,9 +78,9 @@ public:
 			//tsharkInterfaces();
 
 			//necessary?
-			ofSleepMillis(30);
+			//ofSleepMillis(30);
 
-		}
+		//}
 	}
 
 
@@ -89,8 +95,19 @@ public:
 	}
 
 	void tshark() {
+		string cOption;
+
 		string tsharkPath = "C:\\\"Program Files\"\\Wireshark && tshark ";
-		string options = " -c 10 -N m -g -l -W n "; //packet count
+
+		//packet count
+		if (cBool) {
+			cOption = " -c " + cOpt;
+		}
+		else {
+			cOption = "";
+		}
+
+		string options = cOption + " -g -l -W n "; 
 		//string filters = "-f "predef:MyPredefinedHostOnlyFilter"";
 		writeFullPath = "\"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\" + writeTo +".txt\"";
 		string tsharkCmd = "cd " + tsharkPath + options + " > " + writeFullPath; // double ">>" would append the file

@@ -4,15 +4,17 @@
 void ofApp::setup() {
 	threadOn = false;
 
-	myData.setup();
-	myData.startThread();
+	setupGui();
 
-	myShark.setup("We up");
+	/*myData.setup();
+	myData.startThread();*/
+
 	interfacesList =  myShark.networkInterfaces;
 	systemResponse = myShark.systemStream;
 
 	hasPoints = false;
 
+	listen = false;
 }
 
 //--------------------------------------------------------------
@@ -32,39 +34,94 @@ void ofApp::update() {
 
 //--------------------------------------------------------------
 void ofApp::draw() {
-	ofSetColor(ofColor::darkBlue);
-	ofDrawBitmapString(interfacesList, 20, 20);
 
-	ofSetColor(ofColor::darkBlue);
-	ofDrawBitmapString(systemResponse, 20, 400);
+	ofBackground(100, 100, 100);
 
-	ofSetColor(ofColor::orangeRed);
-	if (hasPoints) {
-		drawPoints(ipPoint);
-		drawStrings(ipPoint);
+	if (listen) {
+		//std::cin >> systemResponse;
 	}
+
+	if (mode) {
+		ofSetColor(ofColor::white);
+		ofDrawBitmapString("S to capture data. K to kill the capture process." , 20, 20);
+		ofDrawBitmapString(interfacesList, 20, 60);
+
+		ofSetColor(ofColor::darkBlue);
+		ofDrawBitmapString(systemResponse, 20, 400);
+	}
+	else {
+		ofSetColor(ofColor::darkBlue);
+		ofDrawBitmapString("Ready to read data - Space bar to open file", 20, 20);
+		if (hasPoints) {
+			//draw points
+			ofSetColor(ofColor::orangeRed);
+			drawPoints(ipPoint);
+			
+			//draw connections
+			ofSetColor(ofColor::green);
+			drawConnections();
+
+			//draw text strings
+			ofSetColor(ofColor::darkBlue);
+			drawStrings(ipPoint);
+		}
+	}
+
+	gui.draw();
 	
+}
+
+
+void ofApp::setupGui() {
+	gui.setup();
+	gui.add(mode.setup("Capture/ Read", true));
+	gui.add(limitCapture.setup("limitCapture", false));
+	gui.add(captureSize.setup("Capture Size", 100, 10, 1000));
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key) {
 	switch (key) {
 	case 's':
+		myShark.setup(limitCapture, captureSize);
 		myShark.startThread();
 		threadOn = true;
-		dataFile.path() = myShark.writeFullPath;
-		ofLogNotice("file location", myShark.writeFullPath);
+		//dataFile.path() = myShark.writeFullPath;
+		//ofLogNotice("file location", myShark.writeFullPath);
 		break;
 	case 'e':
 		myShark.stopThread();
 		threadOn = false;
 		break;
+	case 'k':
+		//kill the capture process;
+		ofSystem("Taskkill /IM tshark.exe /F");
+		break;
 	case 'p':
+		myShark.pingTest();
 		myShark.startShark = false;
 		break;
 	case 'r':
 		myData.startThread();
 		break;
+	case 'l':
+		listen = !listen;
+		break;
+	case ' ':
+		//Open the Open File Dialog
+		ofFileDialogResult openFileResult = ofSystemLoadDialog("Select data file");
+
+		//Check if the user opened a file
+		if (openFileResult.bSuccess) {
+
+			//We have a file, check it and process it
+			myData.setup(openFileResult.getPath());
+			myData.startThread();
+
+		}
+		else {
+			ofLogVerbose("User hit cancel");
+		}
 	}
 }
 
@@ -188,10 +245,11 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 		isUnique = true;
 	}
 
+	/*
 	//print results
 	for(int j = 0; j < uIP.size(); j++) {
 		std::cout << uIP[j] << endl;
-	}
+	}*/
 }
 
 void ofApp::assignPoints(int amtPoints) {
@@ -205,14 +263,16 @@ void ofApp::assignPoints(int amtPoints) {
 		ipPoint.push_back(thisPoint);
 	}
 
+	/*
 	for (int tes = 0; tes < ipPoint.size(); tes++) {
 		std::cout << ipPoint[tes][0] << endl;
 	}
+	*/
 }
 
 void ofApp::drawPoints(vector <ofPoint> drawPoints) {
 	for (int p = 0; p < drawPoints.size(); p++) {
-		ofDrawEllipse(drawPoints[p], 5, 5);
+		ofDrawEllipse(drawPoints[p], 10, 10);
 	}
 }
 
@@ -220,6 +280,35 @@ void ofApp::drawPoints(vector <ofPoint> drawPoints) {
 void ofApp::drawStrings(vector <ofPoint> drawPoints) {
 	for (int p = 0; p < drawPoints.size(); p++) {
 		ofDrawBitmapString(uIP[p], drawPoints[p]);
+
+	}
+}
+
+void ofApp::drawConnections() {
+
+	ofPoint drawSource;
+	ofPoint drawDestination;
+
+	//ofSetColor(ofColor::green);
+
+	for (int dc1 = 0; dc1 < dataLines.size(); dc1++) {
+		//get coordinates of source
+		for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
+			if (uIP[dc2] == dataLines[dc1][2]) {
+				drawSource = ipPoint[dc2];
+				break;
+			}
+		}
+
+		//get coordinates of destination
+		for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
+			if (uIP[dc2] == dataLines[dc1][4]) {
+				drawDestination = ipPoint[dc2];
+				break;
+			}
+		}
+
+		ofDrawLine(drawSource, drawDestination);
 
 	}
 }

@@ -15,8 +15,9 @@ public:
 
 	vector<string> linesOfData;
 
-	void setup() {
-		fileLocation = "C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\tsharkData000000014000CC7A.txt";
+	void setup(string filePath) {
+		//fileLocation = "C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\tsharkData000000014000CC7A.txt";
+		fileLocation = filePath;
 	}
 
 	void threadedFunction() {
