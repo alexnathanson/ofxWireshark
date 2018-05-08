@@ -61,16 +61,17 @@ public:
 
 			storedBuffer = ofBufferFromFile(fileLocation);
 			init = false;
-			//linesOfData.clear();
 			arrayFile(storedBuffer);
 			loaded = false;
 		}
 
-		//this will crash with big files!!!
-		/*if (storedBuffer.end() != myBuffer.end() ) {
+		//this might crash with big files!!!
+		// set tshark to write over past data and create a different way to compare them?
+		if (storedBuffer.size() != myBuffer.size() ) {
 			storedBuffer = myBuffer;
+
 			arrayFile(storedBuffer);
-		}*/
+		}
 
 	}
 

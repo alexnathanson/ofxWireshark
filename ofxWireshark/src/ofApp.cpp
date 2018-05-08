@@ -1,5 +1,11 @@
 #include "ofApp.h"
 
+/*
+To Do:
+filtering
+animation
+loop tshark 
+*/
 //--------------------------------------------------------------
 void ofApp::setup() {
 	threadOn = false;
@@ -17,7 +23,9 @@ void ofApp::setup() {
 
 	fileFlag = false;
 
+	//initialize these vectors
 	uIP.clear();
+	ipPoint.clear();
 
 }
 
@@ -48,7 +56,7 @@ void ofApp::update() {
 
 		uniqueIP(dataLines);
 
-		assignPoints(uIP.size());
+		//assignPoints(uIP.size());
 
 		hasPoints = true;
 	}
@@ -267,6 +275,13 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 		}
 		if (isUnique) {
 			uIP.push_back(uipInput[u1][wIP]);
+
+			//set coordinates
+			int x = ofRandom(ofGetWidth());
+			int y = ofRandom(ofGetHeight());
+
+			ofPoint thisPoint(x, y, 0);
+			ipPoint.push_back(thisPoint);
 		}
 		isUnique = true;	
 
@@ -279,34 +294,19 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 		}
 		if (isUnique) {
 			uIP.push_back(uipInput[u1][wIP]);
+
+			//set coordinates
+			int x = ofRandom(ofGetWidth());
+			int y = ofRandom(ofGetHeight());
+
+			ofPoint thisPoint(x, y, 0);
+			ipPoint.push_back(thisPoint);
 		}
 		isUnique = true;
 	}
 
 	amtIP = ofToString(uIP.size());
-	/*
-	//print results
-	for(int j = 0; j < uIP.size(); j++) {
-		std::cout << uIP[j] << endl;
-	}*/
-}
 
-void ofApp::assignPoints(int amtPoints) {
-	ipPoint.clear();
-
-	for (int aP = 0; aP < amtPoints; aP++) {
-		int x = ofRandom(ofGetWidth());
-		int y = ofRandom(ofGetHeight());
-		
-		ofPoint thisPoint(x, y, 0);
-		ipPoint.push_back(thisPoint);
-	}
-
-	/*
-	for (int tes = 0; tes < ipPoint.size(); tes++) {
-		std::cout << ipPoint[tes][0] << endl;
-	}
-	*/
 }
 
 void ofApp::drawPoints(vector <ofPoint> drawPoints) {
@@ -317,7 +317,6 @@ void ofApp::drawPoints(vector <ofPoint> drawPoints) {
 		ofDrawEllipse(drawPoints[p], 10, 10);
 	}
 }
-
 
 void ofApp::drawStrings(vector <ofPoint> drawPoints) {
 	for (int p = 0; p < drawPoints.size(); p++) {
