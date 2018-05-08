@@ -37,13 +37,9 @@ public:
 
 	void threadedFunction() {
 
-
-		// reading files via ofFile or ofBuffer is not the same format as using ofSystem to interact with files
-		ofLogNotice() << "Reading Data from " << fileLocation << endl;
-		//getFile();
-
 		while (isThreadRunning()) {
 			if (loaded == false) {
+				
 				getFile();
 				loaded = true;
 			}
@@ -55,19 +51,25 @@ public:
 
 	void getFile() {
 
+		
 		myBuffer = ofBufferFromFile(fileLocation);// myShark.writeFullPath);
 		
 		if (init) {
+
+			// reading files via ofFile or ofBuffer is not the same format as using ofSystem to interact with files
+			ofLogNotice() << "Reading Data from " << fileLocation << endl;
+
 			storedBuffer = ofBufferFromFile(fileLocation);
 			init = false;
 			//linesOfData.clear();
-			arrayFile(myBuffer);
+			arrayFile(storedBuffer);
 			loaded = false;
 		}
 
-		/*if (storedBuffer.getData() != myBuffer.getData()) {
-			storedBuffer = ofBufferFromFile(fileLocation);
-			arrayFile();
+		//this will crash with big files!!!
+		/*if (storedBuffer.end() != myBuffer.end() ) {
+			storedBuffer = myBuffer;
+			arrayFile(storedBuffer);
 		}*/
 
 	}
@@ -90,7 +92,6 @@ public:
 			}
 
 			//throw out the last line of data, because it may be partial (only necessary if reading and writing data simultanously)
-
 			linesOfData.erase(linesOfData.end() - 1);
 			totalLines = linesOfData.size();
 

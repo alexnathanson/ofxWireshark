@@ -6,9 +6,6 @@ void ofApp::setup() {
 
 	setupGui();
 
-	/*myData.setup();
-	myData.startThread();*/
-
 	interfacesList =  myShark.networkInterfaces;
 	systemResponse = myShark.systemStream;
 
@@ -17,6 +14,11 @@ void ofApp::setup() {
 	listen = false;
 
 	showGui = true;
+
+	fileFlag = false;
+
+	uIP.clear();
+
 }
 
 //--------------------------------------------------------------
@@ -24,11 +26,18 @@ void ofApp::update() {
 
 	//if reading live data, check if file exists, and check flag
 	if (mode == 0) {
-		dataFile.path() = myShark.writeFullPath;
-		std::cout << dataFile.path() << endl;
-		if (dataFile.exists() && !myData.loaded) {
-			myData.setup(dataFile.path());
-			myData.startThread();
+		if (fileFlag) 
+		{
+			ofFile checkFile(retrievedPath);
+			//dataFile.path() = myShark.writeFullPath;
+			//std::cout << dataFile.path() << endl;
+			//if (dataFile.exists() && !myData.loaded) {
+			if (checkFile.getSize() > 0 && !myData.loaded) {
+				std::cout << "Data file exists!" << endl;
+				myData.setup(checkFile.path());
+				myData.startThread();
+				fileFlag = false;
+			}
 		}
 	}
 	
@@ -50,9 +59,9 @@ void ofApp::draw() {
 
 	ofBackground(100, 100, 100);
 
-	if (listen) {
+	/*if (listen) {
 		//std::cin >> systemResponse;
-	}
+	}*/
 
 	ofSetColor(ofColor::white);
 	ofDrawBitmapString("S to capture data. K to kill the capture process.", 20, 20);
@@ -68,6 +77,9 @@ void ofApp::draw() {
 		ofSetColor(ofColor::darkBlue);
 		ofDrawBitmapString("Ready to read data from file - Space bar to open file", 20, 60);
 	}
+
+	ofDrawBitmapString(amtIP + " total unique IP addresses", 20, 100);
+
 
 	if (hasPoints) {
 		//draw points
@@ -105,9 +117,11 @@ void ofApp::keyPressed(int key) {
 	switch (key) {
 	case 's':
 		myShark.setup(limitCapture, captureSize);
+		retrievedPath = myShark.writeFullPath; // must be before the thread starts other wise it wont be able to get the data!
+		retrievedPath = retrievedPath.substr(1, retrievedPath.length() - 2);//remove the quotes on the front and back
 		myShark.startThread();
+		fileFlag = true;
 		threadOn = true;
-		
 		//ofLogNotice("file location", myShark.writeFullPath);
 		break;
 	case 'e':
@@ -122,9 +136,9 @@ void ofApp::keyPressed(int key) {
 		myShark.pingTest();
 		myShark.startShark = false;
 		break;
-	case 'r':
+	/*case 'r':
 		myData.startThread();
-		break;
+		break;*/
 	case 'h':
 		showGui = !showGui;
 		break;
@@ -235,7 +249,6 @@ void ofApp::sortData() {
 }
 
 void ofApp::uniqueIP(vector< vector<string> > uipInput) {
-	uIP.clear();
 	bool isUnique = true;
 	int wIP;
 
@@ -270,6 +283,7 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 		isUnique = true;
 	}
 
+	amtIP = ofToString(uIP.size());
 	/*
 	//print results
 	for(int j = 0; j < uIP.size(); j++) {

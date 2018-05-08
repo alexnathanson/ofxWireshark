@@ -3,10 +3,6 @@
 #include "ofBaseApp.h" //didn't list ofBaseApp as the base class when setting up the shark class...
 
 /*
-resources
-https://www.wireshark.org/lists/wireshark-users/200811/msg00012.html
-https://osqa-ask.wireshark.org/questions/38939/pipe-tshark-output-to-java-program
-
 file format
 Number, time, source, destination, protocol, length, info
 */
@@ -52,10 +48,12 @@ public:
 		cOpt = ofToString(cO);
 
 		writeTo = "tsharkData" + ofToString(currentDate()) + "_" + ofToString(currentTime());
+		writeFullPath = "\"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\" + writeTo + ".txt\"";
+
 	}
 
 	void threadedFunction() {
-		ofLogNotice("Begin", "Thread");
+		//ofLogNotice("Begin", "Thread");
 		//dumpcap();
 		if (!startShark) {
 			tshark();
@@ -63,24 +61,9 @@ public:
 			startShark = true;
 		}
 
-		//while (isThreadRunning()) {
+		//necessary?
+		ofSleepMillis(30);
 
-			//readText();
-			
-			
-			//std::cin >> systemStream;
-			//std::getline(std::cin, systemStream);
-
-			//systemResponse = consoleBuffer;
-			//consoleBuf.getLines(std::istream);
-			//std::cin >> systemResponse;
-			//std::cout << systemResponse << endl;
-			//tsharkInterfaces();
-
-			//necessary?
-			//ofSleepMillis(30);
-
-		//}
 	}
 
 
@@ -109,11 +92,11 @@ public:
 
 		string options = cOption + " -g -l -W n "; 
 		//string filters = "-f "predef:MyPredefinedHostOnlyFilter"";
-		writeFullPath = "\"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\" + writeTo +".txt\"";
+		//writeFullPath = "\"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\" + writeTo +".txt\"";
 		string tsharkCmd = "cd " + tsharkPath + options + " > " + writeFullPath; // double ">>" would append the file
 		ofLogNotice("cmd", tsharkCmd);
 		systemStream = ofSystem(tsharkCmd);
-		//ofLogNotice(systemResponse);
+		ofLogNotice("path? " + writeFullPath);
 	}
 
 	void dumpcap() {

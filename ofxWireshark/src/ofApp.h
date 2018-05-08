@@ -45,6 +45,12 @@ public:
 
 	bool hasPoints;
 
+	bool fileFlag;
+
+	string retrievedPath;
+
+	string amtIP;
+
 	sharkThread myShark;
 	dataThread myData;
 
