@@ -30,6 +30,9 @@ public:
 		ofLogNotice() << "Setting up!" << endl;
 
 		init = true;
+
+		loaded = false;
+
 	}
 
 	void threadedFunction() {
@@ -38,7 +41,6 @@ public:
 		// reading files via ofFile or ofBuffer is not the same format as using ofSystem to interact with files
 		ofLogNotice() << "Reading Data from " << fileLocation << endl;
 		//getFile();
-		loaded = false;
 
 		while (isThreadRunning()) {
 			if (loaded == false) {
@@ -60,6 +62,7 @@ public:
 			init = false;
 			//linesOfData.clear();
 			arrayFile(myBuffer);
+			loaded = false;
 		}
 
 		/*if (storedBuffer.getData() != myBuffer.getData()) {
