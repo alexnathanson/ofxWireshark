@@ -163,5 +163,10 @@ public:
 		int time = (ofGetHours() * 10000) + (ofGetMinutes() * 100) + ofGetSeconds();
 		return time;
 	}
+
+	void exit() {
+		ofSystem("Taskkill /IM tshark.exe /F");
+	}
+
 };
 

@@ -15,10 +15,23 @@ void ofApp::setup() {
 	hasPoints = false;
 
 	listen = false;
+
+	showGui = true;
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
+
+	//if reading live data, check if file exists, and check flag
+	if (mode == 0) {
+		dataFile.path() = myShark.writeFullPath;
+		std::cout << dataFile.path() << endl;
+		if (dataFile.exists() && !myData.loaded) {
+			myData.setup(dataFile.path());
+			myData.startThread();
+		}
+	}
+	
 
 	if (myData.loaded) {
 		sortData();
@@ -41,52 +54,60 @@ void ofApp::draw() {
 		//std::cin >> systemResponse;
 	}
 
-	if (mode) {
-		ofSetColor(ofColor::white);
-		ofDrawBitmapString("S to capture data. K to kill the capture process." , 20, 20);
-		ofDrawBitmapString(interfacesList, 20, 60);
+	ofSetColor(ofColor::white);
+	ofDrawBitmapString("S to capture data. K to kill the capture process.", 20, 20);
 
+	if (mode) {
+		
+		//ofDrawBitmapString(interfacesList, 20, 60);
 		ofSetColor(ofColor::darkBlue);
-		ofDrawBitmapString(systemResponse, 20, 400);
+		ofDrawBitmapString("Live Animation Mode", 20, 60);
+		//ofDrawBitmapString(systemResponse, 20, 400);
 	}
 	else {
 		ofSetColor(ofColor::darkBlue);
-		ofDrawBitmapString("Ready to read data - Space bar to open file", 20, 20);
-		if (hasPoints) {
-			//draw points
-			ofSetColor(ofColor::orangeRed);
-			drawPoints(ipPoint);
-			
-			//draw connections
-			ofSetColor(ofColor::green);
-			drawConnections();
-
-			//draw text strings
-			ofSetColor(ofColor::darkBlue);
-			drawStrings(ipPoint);
-		}
+		ofDrawBitmapString("Ready to read data from file - Space bar to open file", 20, 60);
 	}
 
-	gui.draw();
+	if (hasPoints) {
+		//draw points
+		ofSetColor(ofColor::orangeRed);
+		drawPoints(ipPoint);
+
+		//draw connections
+		ofSetColor(ofColor::green);
+		drawConnections();
+
+		//draw text strings
+		ofSetColor(ofColor::darkBlue);
+		drawStrings(ipPoint);
+	}
+
+	if (showGui) {
+		gui.draw();
+	}
 	
 }
 
 
 void ofApp::setupGui() {
 	gui.setup();
-	gui.add(mode.setup("Capture/ Read", true));
+	gui.add(mode.setup("Live Capture (0)/ Read from file (1)", false));
 	gui.add(limitCapture.setup("limitCapture", false));
 	gui.add(captureSize.setup("Capture Size", 100, 10, 1000));
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key) {
+	
+	string liveDisplay = "";
+
 	switch (key) {
 	case 's':
 		myShark.setup(limitCapture, captureSize);
 		myShark.startThread();
 		threadOn = true;
-		//dataFile.path() = myShark.writeFullPath;
+		
 		//ofLogNotice("file location", myShark.writeFullPath);
 		break;
 	case 'e':
@@ -95,7 +116,7 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'k':
 		//kill the capture process;
-		ofSystem("Taskkill /IM tshark.exe /F");
+		killShark();
 		break;
 	case 'p':
 		myShark.pingTest();
@@ -103,6 +124,9 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'r':
 		myData.startThread();
+		break;
+	case 'h':
+		showGui = !showGui;
 		break;
 	case 'l':
 		listen = !listen;
@@ -113,7 +137,7 @@ void ofApp::keyPressed(int key) {
 
 		//Check if the user opened a file
 		if (openFileResult.bSuccess) {
-
+			std::cout << openFileResult.getPath() << endl;
 			//We have a file, check it and process it
 			myData.setup(openFileResult.getPath());
 			myData.startThread();
@@ -178,6 +202,7 @@ void ofApp::dragEvent(ofDragInfo dragInfo) {
 void ofApp::exit() {
 	if (threadOn) {
 		myShark.stopThread();
+		killShark();
 	}
 }
 
@@ -214,8 +239,8 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 	bool isUnique = true;
 	int wIP;
 
-	std::cout << uipInput[0][2] << endl;
-	std::cout << uipInput[0][4] << endl;
+	//std::cout << uipInput[0][2] << endl;
+	//std::cout << uipInput[0][4] << endl;
 
 	//loop through input
 	for (int u1 = 0; u1 < uipInput.size(); u1++) {
@@ -272,6 +297,9 @@ void ofApp::assignPoints(int amtPoints) {
 
 void ofApp::drawPoints(vector <ofPoint> drawPoints) {
 	for (int p = 0; p < drawPoints.size(); p++) {
+		ofNoFill();
+		ofDrawCircle(drawPoints[p], 20);
+		ofFill();
 		ofDrawEllipse(drawPoints[p], 10, 10);
 	}
 }
@@ -311,4 +339,8 @@ void ofApp::drawConnections() {
 		ofDrawLine(drawSource, drawDestination);
 
 	}
+}
+
+void ofApp::killShark() {
+	ofSystem("Taskkill /IM tshark.exe /F");
 }

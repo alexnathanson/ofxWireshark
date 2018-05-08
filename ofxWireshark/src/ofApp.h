@@ -31,6 +31,10 @@ public:
 	ofxToggle	limitCapture;
 	ofxIntSlider	captureSize;
 
+	bool showGui;
+
+	void killShark();
+
 	ofFile dataFile;
 	string systemResponse;
 	string interfacesList;
