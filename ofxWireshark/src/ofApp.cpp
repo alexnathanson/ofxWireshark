@@ -4,8 +4,9 @@
 To Do:
 filtering
 animation
-loop tshark 
+visual differentation - sender/receiver, port, etc.
 */
+
 //--------------------------------------------------------------
 void ofApp::setup() {
 	threadOn = false;
@@ -71,12 +72,10 @@ void ofApp::draw() {
 	if (mode) {
 		
 		//ofDrawBitmapString(interfacesList, 20, 60);
-		ofSetColor(ofColor::darkBlue);
 		ofDrawBitmapString("Live Animation Mode", 20, 60);
 		//ofDrawBitmapString(systemResponse, 20, 400);
 	}
 	else {
-		ofSetColor(ofColor::darkBlue);
 		ofDrawBitmapString("Ready to read data from file - Space bar to open file", 20, 60);
 	}
 
@@ -315,7 +314,7 @@ void ofApp::drawPoints(vector <ofPoint> drawPoints, vector <vector <string> > ge
 		ofNoFill();
 		ofDrawCircle(drawPoints[p], drawSize(ofToInt(getTime[p][1])));
 		ofFill();
-		ofDrawEllipse(drawPoints[p], 10, 10);
+		ofDrawCircle(drawPoints[p], 1 + (drawSize(ofToInt(getTime[p][1])) * .3));
 	}
 }
 
@@ -330,6 +329,7 @@ void ofApp::drawConnections() {
 	ofPoint drawSource;
 	ofPoint drawDestination;
 
+	string proto;
 	//ofSetColor(ofColor::green);
 
 	for (int dc1 = 0; dc1 < dataLines.size(); dc1++) {
@@ -337,6 +337,7 @@ void ofApp::drawConnections() {
 		for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
 			if (uIP[dc2][0] == dataLines[dc1][2]) {
 				drawSource = ipPoint[dc2];
+				proto = dataLines[dc1][5];
 				break;
 			}
 		}
@@ -349,7 +350,7 @@ void ofApp::drawConnections() {
 			}
 		}
 
-		ofDrawLine(drawSource, drawDestination);
+		protocolLine(proto, drawSource, drawDestination);
 
 	}
 }
@@ -361,7 +362,7 @@ void ofApp::killShark() {
 int ofApp::drawSize(int capTime) {
 	int size;
 
-	if (ofGetElapsedTimeMillis() - capTime < 5000) {
+	if (ofGetElapsedTimeMillis() - capTime < 7000) {
 		size = 20 * sin(ofGetElapsedTimeMillis() - capTime);
 	}
 	else {
@@ -369,4 +370,46 @@ int ofApp::drawSize(int capTime) {
 	}
 	
 	return size;
+}
+
+void ofApp::protocolLine(string proto, ofPoint srcP, ofPoint dstP) {
+	
+	//maybe divide these up by transport layer type?
+
+	if (proto == "DNS") {
+		ofSetColor(ofColor::red);
+		ofDrawLine(srcP, dstP);
+	}
+	else if (proto == "TCP") {
+		ofSetColor(ofColor::green);
+		ofDrawLine(srcP, dstP);
+	}
+	else if (proto == "ARP") {
+		ofSetColor(ofColor::black);
+		ofDrawLine(srcP, dstP); //straight line
+	}
+	else if (proto == "DHCP") {
+		ofSetColor(ofColor::hotPink);
+		ofDrawLine(srcP, dstP);
+	}
+	else if (proto == "UDP") {
+		ofSetColor(ofColor::yellow);
+		ofDrawLine(srcP, dstP);
+	}
+	else if (proto == "HTTP" || proto == "HTTPS") {
+		ofSetColor(ofColor::purple);
+		ofDrawLine(srcP, dstP);
+	}
+	else if (proto == "SSL" || proto == "TLSv1.2") {
+		ofSetColor(ofColor::turquoise);
+		ofDrawLine(srcP, dstP);
+	}
+	else if (proto == "QUIC") {
+		ofSetColor(ofColor::tan);
+		ofDrawLine(srcP, dstP);
+	}
+	else {
+		ofSetColor(ofColor::blue);
+		ofDrawLine(srcP, dstP);
+	}
 }

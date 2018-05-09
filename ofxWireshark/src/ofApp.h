@@ -73,4 +73,6 @@ public:
 	bool ringBool;
 
 	int drawSize(int capTime);
+
+	void protocolLine(string proto, ofPoint srcP, ofPoint dstP);
 };
