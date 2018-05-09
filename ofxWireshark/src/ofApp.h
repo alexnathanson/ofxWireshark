@@ -57,7 +57,7 @@ public:
 
 	void animPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime);
 	void drawStrings(vector<ofPoint> drawPoints);
-	void drawConnections();
+	void drawConnections(vector< vector<string> > dCinput);
 
 	bool ringBool;
 

@@ -20,8 +20,6 @@ void ofApp::setup() {
 	glEnable(GL_POINT_SMOOTH); // use circular points instead of square points
 	glPointSize(10); // make the points bigger
 
-	//textFbo.allocate(ofGetWidth(), ofGetHeight());
-
 	threadOn = false;
 
 	setupGui();
@@ -42,7 +40,7 @@ void ofApp::setup() {
 	amtRings = 0;
 	oldOffsetTime = 0;
 
-	rotationSpeed = 25;
+	rotationSpeed = 60;
 
 }
 
@@ -55,9 +53,7 @@ void ofApp::update() {
 		if (fileFlag) 
 		{
 			ofFile checkFile(retrievedPath);
-			//dataFile.path() = myShark.writeFullPath;
-			//std::cout << dataFile.path() << endl;
-			//if (dataFile.exists() && !myData.loaded) {
+			
 			if (checkFile.getSize() > 0 && !myData.loaded) {
 				std::cout << "Data file exists!" << endl;
 				myData.setup(checkFile.path());
@@ -76,29 +72,16 @@ void ofApp::update() {
 	//FIX THIS!!! It just up 150 lines every time it loops
 	totCaptures = myData.totalLines + (amtRings * captureSize);
 	
-
 	if (myData.loaded) {
 		sortData();
 		myData.loaded = false;
 
 		uniqueIP(dataLines);
 
-		//assignPoints(uIP.size());
-
 		hasPoints = true;
 	}
 
-	//textFbo.begin();
-	//if (hasPoints) {
-	//	
-	//	//draw text strings
-	//	ofSetColor(ofColor::darkBlue);
-	//	drawStrings(ipPoint);
-	//}
-	////ofClearAlpha();
-	//textFbo.end();
-
-	drawConnections();
+	drawConnections(uIP);
 
 }
 
@@ -129,8 +112,6 @@ void ofApp::draw() {
 	}
 
 	cam.begin();
-
-	//textFbo.draw(0, 0);
 
 	ofRotateY((ofGetElapsedTimeMillis() / rotationSpeed) % 360);
 
@@ -244,7 +225,7 @@ void ofApp::sortData() {
 		}
 	}
 
-	//should add in a way to reassamble things that we split by accident like multiword phrases inside of []
+	//should add in a way to reassamble things that were split by accident like multiword phrases inside of []
 	
 }
 
@@ -252,7 +233,7 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 	bool isUnique = true;
 	int wIP;
 
-	//for uIP position [0] is IP address, position [1] is time, position [2] is frequency (currently not working correctly)
+	// uIP position [0] is IP address, position [1] is time, position [2] proto, position [3] is destination IP if sender or x if receiver
 	vector<string> tempIP;
 
 	//loop through input
@@ -263,8 +244,9 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 			if (uIP[u2][0] == uipInput[u1][2]) {
 				isUnique = false;
 				//if not unique update time stamp
-				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000));
-				uIP[u2][2] = ofToString(ofToInt(uIP[u2][2]) + 1);
+				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000)); //timecode + offset
+				uIP[u2][2] = uipInput[u1][5]; //protocol
+				uIP[u2][3] = uipInput[u1][4]; //destination
 				break;
 			}
 		}
@@ -272,7 +254,8 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 			tempIP.clear();
 			tempIP.push_back(uipInput[u1][wIP]);
 			tempIP.push_back(ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000))); //tshark captures time as a float of seconds.
-			tempIP.push_back(ofToString(1));
+			tempIP.push_back(uipInput[u1][5]); //protocol
+			tempIP.push_back(uipInput[u1][4]); //destination
 			uIP.push_back(tempIP);
 
 			//set coordinates
@@ -295,7 +278,8 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 				isUnique = false;
 				//if not unique update time stamp
 				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000));
-				uIP[u2][2] = ofToString(ofToInt(uIP[u2][2]) + 1);
+				uIP[u2][2] = uipInput[u1][5]; //protocol
+				uIP[u2][3] = "x"; //destination
 				break;
 			}
 		}
@@ -303,7 +287,8 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 			tempIP.clear();
 			tempIP.push_back(uipInput[u1][wIP]);
 			tempIP.push_back(ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000)));
-			tempIP.push_back(ofToString(1));
+			tempIP.push_back(uipInput[u1][5]); //protocol
+			tempIP.push_back("x"); //destination
 			uIP.push_back(tempIP);
 
 			//set coordinates
@@ -327,15 +312,16 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 
 void ofApp::animPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime) {
 	for (int p = 0; p < drawPoints.size(); p++) {
-		
-		if (ofGetElapsedTimeMillis() - ofToInt(getTime[p][1]) < 10000) {
-			//ofDrawCircle(drawPoints[p], 1 + (drawSize(ofToInt(getTime[p][1]), ofToInt(getTime[p][2])) * .3));
-			ofSpherePrimitive animP;
-			animP.enableColors();
-			//animP
-			animP.setRadius(animSize(ofToInt(getTime[p][1])));
-			animP.setPosition(drawPoints[p]);
-			animP.drawWireframe();
+		if (getTime[p][3] != "x") {
+			if (ofGetElapsedTimeMillis() - ofToInt(getTime[p][1]) < 10000) {
+				//ofDrawCircle(drawPoints[p], 1 + (drawSize(ofToInt(getTime[p][1]), ofToInt(getTime[p][2])) * .3));
+				ofSpherePrimitive animP;
+				animP.enableColors();
+				//animP
+				animP.setRadius(animSize(ofToInt(getTime[p][1])));
+				animP.setPosition(drawPoints[p]);
+				animP.drawWireframe();
+			}
 		}
 	}
 }
@@ -346,7 +332,7 @@ void ofApp::drawStrings(vector<ofPoint> drawPoints) {
 	}
 }
 
-void ofApp::drawConnections() {
+void ofApp::drawConnections(vector< vector<string> > dCinput) {
 
 	ofPoint drawSource;
 	ofPoint drawDestination;
@@ -356,29 +342,40 @@ void ofApp::drawConnections() {
 	string proto;
 	//ofSetColor(ofColor::green);
 
-	for (int dc1 = 0; dc1 < dataLines.size(); dc1++) {
-		//get coordinates of source
-		for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
-			if (uIP[dc2][0] == dataLines[dc1][2]) {
-				drawSource = ipPoint[dc2];
-				proto = dataLines[dc1][5];
-				break;
+	for (int dc1 = 0; dc1 < dCinput.size(); dc1++) {
+		//check that it's the sender and it's fresh
+		//std::cout << dCinput[dc1][3] << endl;
+		if (dCinput[dc1][3] != "x" && ofGetElapsedTimeMillis() - ofToInt(dCinput[dc1][1]) < 10000) { 
+
+			//getCoordinates of source
+			drawSource = ipPoint[dc1];
+			proto = dCinput[dc1][2];
+
+			//for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
+			//	if (uIP[dc2][0] == dataLines[dc1][2]) {
+			//		drawSource = ipPoint[dc2];
+			//		proto = dCinput[dc1][2];
+			//		break;
+			//	}
+			//}
+
+			
+			//get coordinates of destination
+			for (int dc2 = 0; dc2 < dCinput.size(); dc2++) {
+				//if the destination matches anoter sender, get that position number
+				if (dCinput[dc1][3] == dCinput[dc2][0]) {
+					drawDestination = ipPoint[dc2];
+					//std::cout << "destination! " << drawDestination.x << " " << drawDestination.y << endl;
+					break;
+				}
 			}
+			
+
+			//drawDestination.set(0, 0, 0);
+			protocolLine(proto);
+			mLines.addVertex(drawSource);
+			mLines.addVertex(drawDestination);
 		}
-
-		//get coordinates of destination
-		for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
-			if (uIP[dc2][0] == dataLines[dc1][4]) {
-				drawDestination = ipPoint[dc2];
-				break;
-			}
-		}
-
-		protocolLine(proto);
-		mLines.addVertex(drawSource);
-		mLines.addVertex(drawDestination);
-		//mLines.addColor(ofRandom(255));
-
 	}
 }
 
@@ -399,54 +396,31 @@ void ofApp::protocolLine(string proto) {
 	//maybe divide these up by transport layer type?
 
 	if (proto == "DNS") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::green);
 	}
 	else if (proto == "TCP") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::blue);
-
 	}
 	else if (proto == "ARP") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::purple);
-
 	}
 	else if (proto == "DHCP") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::yellow);
-
 	}
 	else if (proto == "UDP") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::black);
 	}
 	else if (proto == "HTTP" || proto == "HTTPS") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::orange);
 
 	}
 	else if (proto == "SSL" || proto == "TLSv1.2") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::pink);
-
 	}
 	else if (proto == "QUIC") {
-		/*mLines.addVertex(srcP);
-		mLines.addVertex(dstP);*/
 		mLines.addColor(ofColor::lightBlue);
-
 	}
-	else {
-		
+	else {	
 		mLines.addColor(255);
-
 	}
 }
