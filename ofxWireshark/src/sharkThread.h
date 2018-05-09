@@ -28,12 +28,12 @@ public:
 
 	int oldTextLines = 0;
 
-	//ofBuffer::Line lastLine;
-
 	string cOpt;
 	bool cBool;
 
-	void setup(bool cB, int cO) {
+	bool ringBool;
+
+	void setup(bool cB, int cO, bool ringB) {
 		ofLogNotice("Thread started");
 		//networkInterfaces = tsharkInterfaces();
 		//ofLogNotice("returned", networkInterfaces);
@@ -47,23 +47,27 @@ public:
 		cBool = cB;
 		cOpt = ofToString(cO);
 
+		ringBool = ringB;
+
 		writeTo = "tsharkData" + ofToString(currentDate()) + "_" + ofToString(currentTime());
 		writeFullPath = "\"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\" + writeTo + ".txt\"";
 
 	}
 
 	void threadedFunction() {
-		//ofLogNotice("Begin", "Thread");
-		//dumpcap();
-		if (!startShark) {
-			tshark();
-			//pingTest();
-			startShark = true;
+
+		while (true) {
+			if (!startShark) {
+
+				tshark();
+
+				if (!ringBool) {
+					startShark = true;
+				}
+			
+			}
 		}
-
-		//necessary?
-		ofSleepMillis(30);
-
+		
 	}
 
 
@@ -90,23 +94,14 @@ public:
 			cOption = "";
 		}
 
-		string options = cOption + " -g -l -W n "; 
+		string options = cOption + " -g -l -W n"; 
+
 		//string filters = "-f "predef:MyPredefinedHostOnlyFilter"";
 		//writeFullPath = "\"C:\\Users\\Alex Nathanson\\Documents\\openFrameworks\\of_v0.9.8_vs_release\\apps\\myApps\\ofxWireshark\\ofxWireshark\\bin\\data\\" + writeTo +".txt\"";
 		string tsharkCmd = "cd " + tsharkPath + options + " > " + writeFullPath; // double ">>" would append the file
-		ofLogNotice("cmd", tsharkCmd);
-		systemStream = ofSystem(tsharkCmd);
-		ofLogNotice("path? " + writeFullPath);
-	}
-
-	void dumpcap() {
-		string tsharkPath = "C:\\\"Program Files\"\\Wireshark && dumpcap ";
-		string tsharkCmd = "cd " + tsharkPath;
-		ofLogNotice("cmd", tsharkCmd);
+		//ofLogNotice("cmd", tsharkCmd);
 		ofSystem(tsharkCmd);
-		//ofLogNotice(systemResponse);
 
-		std::getline(std::cin, systemStream);
 	}
 
 	void pingTest() {
@@ -131,11 +126,10 @@ public:
 				}
 
 				// print out the line
-				systemStream = linesOfData[linesOfData.size()];
+				//systemStream = linesOfData[linesOfData.size()];
 			}
 		}
 	}
-
 
 	int currentDate() {
 		int date = (ofGetYear() * 10000) + (ofGetMonth() * 100) + ofGetDay();

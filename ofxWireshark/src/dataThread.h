@@ -65,8 +65,7 @@ public:
 			loaded = false;
 		}
 
-		//this might crash with big files!!!
-		// set tshark to write over past data and create a different way to compare them?
+		//this might crash it when it gets too big if the ring buffer is turned off!!!
 		if (storedBuffer.size() != myBuffer.size() ) {
 			storedBuffer = myBuffer;
 
@@ -98,7 +97,6 @@ public:
 
 			//ofLogNotice("Data Lines: " + ofToString(totalLines));
 			//ofLogNotice("First Line: " + linesOfData[0]);
-
 
 		}
 		else {

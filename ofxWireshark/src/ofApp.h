@@ -29,6 +29,7 @@ public:
 	void setupGui();
 	ofxToggle	mode;
 	ofxToggle	limitCapture;
+	ofxToggle	ringToggle;
 	ofxIntSlider	captureSize;
 
 	bool showGui;
@@ -66,6 +67,6 @@ public:
 	void drawStrings(vector <ofPoint> drawPoints);
 	void drawConnections();
 
-	bool listen;
+	bool ringBool;
 
 };

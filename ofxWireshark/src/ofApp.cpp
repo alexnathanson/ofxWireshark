@@ -17,8 +17,6 @@ void ofApp::setup() {
 
 	hasPoints = false;
 
-	listen = false;
-
 	showGui = true;
 
 	fileFlag = false;
@@ -67,10 +65,6 @@ void ofApp::draw() {
 
 	ofBackground(100, 100, 100);
 
-	/*if (listen) {
-		//std::cin >> systemResponse;
-	}*/
-
 	ofSetColor(ofColor::white);
 	ofDrawBitmapString("S to capture data. K to kill the capture process.", 20, 20);
 
@@ -113,8 +107,9 @@ void ofApp::draw() {
 void ofApp::setupGui() {
 	gui.setup();
 	gui.add(mode.setup("Live Capture (0)/ Read from file (1)", false));
-	gui.add(limitCapture.setup("limitCapture", false));
-	gui.add(captureSize.setup("Capture Size", 100, 10, 1000));
+	gui.add(limitCapture.setup("Limit Capture", true));
+	gui.add(ringToggle.setup("Ring Buffer", true));
+	gui.add(captureSize.setup("Capture Size", 150, 10, 1000));
 }
 
 //--------------------------------------------------------------
@@ -124,7 +119,7 @@ void ofApp::keyPressed(int key) {
 
 	switch (key) {
 	case 's':
-		myShark.setup(limitCapture, captureSize);
+		myShark.setup(limitCapture, captureSize, ringToggle);
 		retrievedPath = myShark.writeFullPath; // must be before the thread starts other wise it wont be able to get the data!
 		retrievedPath = retrievedPath.substr(1, retrievedPath.length() - 2);//remove the quotes on the front and back
 		myShark.startThread();
@@ -149,9 +144,6 @@ void ofApp::keyPressed(int key) {
 		break;*/
 	case 'h':
 		showGui = !showGui;
-		break;
-	case 'l':
-		listen = !listen;
 		break;
 	case ' ':
 		//Open the Open File Dialog
