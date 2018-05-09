@@ -11,18 +11,7 @@ public:
 	void setup();
 	void update();
 	void draw();
-
 	void keyPressed(int key);
-	void keyReleased(int key);
-	void mouseMoved(int x, int y);
-	void mouseDragged(int x, int y, int button);
-	void mousePressed(int x, int y, int button);
-	void mouseReleased(int x, int y, int button);
-	void mouseEntered(int x, int y);
-	void mouseExited(int x, int y);
-	void windowResized(int w, int h);
-	void dragEvent(ofDragInfo dragInfo);
-	void gotMessage(ofMessage msg);
 	void exit();
 
 	ofxPanel gui;
@@ -66,7 +55,7 @@ public:
 
 	vector <ofPoint> ipPoint;
 
-	void drawPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime);
+	void animPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime);
 	void drawStrings(vector<ofPoint> drawPoints);
 	void drawConnections();
 
@@ -75,13 +64,11 @@ public:
 	int totCaptures;
 	int amtRings;
 	int oldOffsetTime;
-	int drawSize(int capTime, int scaler);
+	int animSize(int capTime);
 
 	void protocolLine(string proto);
 
 	int rotationSpeed;
-
-	ofFbo textFbo;
 
 	ofEasyCam cam;
 	ofMesh mesh;

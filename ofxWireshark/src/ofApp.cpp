@@ -20,7 +20,7 @@ void ofApp::setup() {
 	glEnable(GL_POINT_SMOOTH); // use circular points instead of square points
 	glPointSize(10); // make the points bigger
 
-	textFbo.allocate(ofGetWidth(), ofGetHeight());
+	//textFbo.allocate(ofGetWidth(), ofGetHeight());
 
 	threadOn = false;
 
@@ -42,7 +42,7 @@ void ofApp::setup() {
 	amtRings = 0;
 	oldOffsetTime = 0;
 
-	rotationSpeed = 15;
+	rotationSpeed = 25;
 
 }
 
@@ -138,21 +138,18 @@ void ofApp::draw() {
 	//ofScale(2, 2, 2); // flip the y axis and zoom in a bit
 	
 	if (hasPoints) {
-		//	//draw points
-		//	ofSetColor(ofColor::orangeRed);
-		//	drawPoints(ipPoint, uIP);
-
-		//	//draw connections
-		//	ofSetColor(ofColor::green);
-		//	drawConnections();
+		//animate points
+		animPoints(ipPoint, uIP);
 
 		//draw text strings
 		ofSetColor(ofColor::darkBlue);
 		drawStrings(ipPoint);
 	}
 
+	//point cloud of all IPs captured
 	mesh.draw();
-
+	
+	//color coded lines between IPs based on protocol
 	mLines.draw();
 	
 	cam.end();
@@ -223,56 +220,6 @@ void ofApp::keyPressed(int key) {
 	}
 }
 
-//--------------------------------------------------------------
-void ofApp::keyReleased(int key) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo) {
-
-}
-
 void ofApp::exit() {
 	if (threadOn) {
 		myShark.stopThread();
@@ -305,9 +252,7 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 	bool isUnique = true;
 	int wIP;
 
-	//std::cout << uipInput[0][2] << endl;
-
-	//for uIP position [0] is IP address, position [1] is time, should position [2] be send or receive?
+	//for uIP position [0] is IP address, position [1] is time, position [2] is frequency (currently not working correctly)
 	vector<string> tempIP;
 
 	//loop through input
@@ -380,12 +325,18 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 
 }
 
-void ofApp::drawPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime) {
+void ofApp::animPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime) {
 	for (int p = 0; p < drawPoints.size(); p++) {
-		ofNoFill();
-		ofDrawCircle(drawPoints[p], drawSize(ofToInt(getTime[p][1]), ofToInt(getTime[p][2])));
-		ofFill();
-		ofDrawCircle(drawPoints[p], 1 + (drawSize(ofToInt(getTime[p][1]), ofToInt(getTime[p][2])) * .3));
+		
+		if (ofGetElapsedTimeMillis() - ofToInt(getTime[p][1]) < 10000) {
+			//ofDrawCircle(drawPoints[p], 1 + (drawSize(ofToInt(getTime[p][1]), ofToInt(getTime[p][2])) * .3));
+			ofSpherePrimitive animP;
+			animP.enableColors();
+			//animP
+			animP.setRadius(animSize(ofToInt(getTime[p][1])));
+			animP.setPosition(drawPoints[p]);
+			animP.drawWireframe();
+		}
 	}
 }
 
@@ -435,15 +386,10 @@ void ofApp::killShark() {
 	ofSystem("Taskkill /IM tshark.exe /F");
 }
 
-int ofApp::drawSize(int capTime, int scaler) {
+int ofApp::animSize(int capTime) {
 	int size;
-
-	if (ofGetElapsedTimeMillis() - capTime < 7000) {
-		size = 20 * sin(ofGetElapsedTimeMillis() - capTime); // removed this -> (scaler/totCaptures) needs to implement counting system
-	}
-	else {
-		size = 1;
-	}
+	int timeDif = ofGetElapsedTimeMillis() - capTime;
+	size = (0.00002 * (10000 - timeDif)) * (timeDif % 1000);
 	
 	return size;
 }
