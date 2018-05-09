@@ -9,6 +9,19 @@ visual differentation - sender/receiver, port, etc.
 
 //--------------------------------------------------------------
 void ofApp::setup() {
+	ofSetVerticalSync(true);
+
+	mesh.setMode(OF_PRIMITIVE_POINTS);
+	mLines.setMode(OF_PRIMITIVE_LINES);
+	mLines.enableColors();
+	mLines.enableIndices();
+
+	ofEnableDepthTest();
+	glEnable(GL_POINT_SMOOTH); // use circular points instead of square points
+	glPointSize(10); // make the points bigger
+
+	textFbo.allocate(ofGetWidth(), ofGetHeight());
+
 	threadOn = false;
 
 	setupGui();
@@ -26,10 +39,16 @@ void ofApp::setup() {
 	uIP.clear();
 	ipPoint.clear();
 
+	amtRings = 0;
+	oldOffsetTime = 0;
+
+	rotationSpeed = 15;
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
+
 
 	//if reading live data, check if file exists, and check flag
 	if (mode == 0) {
@@ -44,9 +63,18 @@ void ofApp::update() {
 				myData.setup(checkFile.path());
 				myData.startThread();
 				fileFlag = false;
+				oldOffsetTime = myShark.offsetTime;
 			}
 		}
 	}
+
+	//offset the current amount by the amount from past buffers
+	if (myShark.offsetTime != oldOffsetTime && oldOffsetTime != 0 && myShark.offsetTime != 0) {
+		oldOffsetTime = myShark.offsetTime;
+		amtRings++;
+	}
+	//FIX THIS!!! It just up 150 lines every time it loops
+	totCaptures = myData.totalLines + (amtRings * captureSize);
 	
 
 	if (myData.loaded) {
@@ -59,6 +87,19 @@ void ofApp::update() {
 
 		hasPoints = true;
 	}
+
+	//textFbo.begin();
+	//if (hasPoints) {
+	//	
+	//	//draw text strings
+	//	ofSetColor(ofColor::darkBlue);
+	//	drawStrings(ipPoint);
+	//}
+	////ofClearAlpha();
+	//textFbo.end();
+
+	drawConnections();
+
 }
 
 //--------------------------------------------------------------
@@ -78,31 +119,43 @@ void ofApp::draw() {
 	else {
 		ofDrawBitmapString("Ready to read data from file - Space bar to open file", 20, 60);
 	}
+	ofDrawBitmapString(ofToString(totCaptures) + " total captures", 20, 100);
+	ofDrawBitmapString(amtIP + " total unique IP addresses", 20, 140);
+	ofDrawBitmapString("Ellapsed time: " + ofToString(ofGetElapsedTimeMillis()), 20, 180);
+	ofDrawBitmapString("Current offset time: " + ofToString(myShark.offsetTime), 20, 220);
 
-	ofDrawBitmapString(amtIP + " total unique IP addresses", 20, 100);
-	ofDrawBitmapString("Ellapsed time: " + ofToString(ofGetElapsedTimeMillis()), 20, 140);
-	ofDrawBitmapString("Current offset time: " + ofToString(myShark.offsetTime), 20, 180);
+	if (showGui) {
+		gui.draw();
+	}
 
+	cam.begin();
 
+	//textFbo.draw(0, 0);
 
+	ofRotateY((ofGetElapsedTimeMillis() / rotationSpeed) % 360);
 
+	ofTranslate(-ofGetWidth() / 2, -ofGetHeight() / 2);
+	//ofScale(2, 2, 2); // flip the y axis and zoom in a bit
+	
 	if (hasPoints) {
-		//draw points
-		ofSetColor(ofColor::orangeRed);
-		drawPoints(ipPoint, uIP);
+		//	//draw points
+		//	ofSetColor(ofColor::orangeRed);
+		//	drawPoints(ipPoint, uIP);
 
-		//draw connections
-		ofSetColor(ofColor::green);
-		drawConnections();
+		//	//draw connections
+		//	ofSetColor(ofColor::green);
+		//	drawConnections();
 
 		//draw text strings
 		ofSetColor(ofColor::darkBlue);
 		drawStrings(ipPoint);
 	}
 
-	if (showGui) {
-		gui.draw();
-	}
+	mesh.draw();
+
+	mLines.draw();
+	
+	cam.end();
 	
 }
 
@@ -148,6 +201,10 @@ void ofApp::keyPressed(int key) {
 	case 'h':
 		showGui = !showGui;
 		break;
+	/*case OF_KEY_ESC:
+		uIP.clear();
+		ipPoint.clear();
+		break;*/
 	case ' ':
 		//Open the Open File Dialog
 		ofFileDialogResult openFileResult = ofSystemLoadDialog("Select data file");
@@ -262,6 +319,7 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 				isUnique = false;
 				//if not unique update time stamp
 				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000));
+				uIP[u2][2] = ofToString(ofToInt(uIP[u2][2]) + 1);
 				break;
 			}
 		}
@@ -269,13 +327,19 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 			tempIP.clear();
 			tempIP.push_back(uipInput[u1][wIP]);
 			tempIP.push_back(ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000))); //tshark captures time as a float of seconds.
+			tempIP.push_back(ofToString(1));
 			uIP.push_back(tempIP);
 
 			//set coordinates
 			int x = ofRandom(ofGetWidth());
 			int y = ofRandom(ofGetHeight());
+			int z = 300 - ofRandom(600);
 
-			ofPoint thisPoint(x, y, 0);
+			mesh.addColor(ofColor::red);
+			ofVec3f pos(x, y, z);
+			mesh.addVertex(pos);
+
+			ofPoint thisPoint(x, y, z);
 			ipPoint.push_back(thisPoint);
 		}
 		isUnique = true;	
@@ -286,6 +350,7 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 				isUnique = false;
 				//if not unique update time stamp
 				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000));
+				uIP[u2][2] = ofToString(ofToInt(uIP[u2][2]) + 1);
 				break;
 			}
 		}
@@ -293,13 +358,19 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 			tempIP.clear();
 			tempIP.push_back(uipInput[u1][wIP]);
 			tempIP.push_back(ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000)));
+			tempIP.push_back(ofToString(1));
 			uIP.push_back(tempIP);
 
 			//set coordinates
 			int x = ofRandom(ofGetWidth());
 			int y = ofRandom(ofGetHeight());
+			int z = 300 - ofRandom(600);
 
-			ofPoint thisPoint(x, y, 0);
+			mesh.addColor(ofColor::red);
+			ofVec3f pos(x, y, z);
+			mesh.addVertex(pos);
+
+			ofPoint thisPoint(x, y, z);
 			ipPoint.push_back(thisPoint);
 		}
 		isUnique = true;
@@ -312,9 +383,9 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 void ofApp::drawPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime) {
 	for (int p = 0; p < drawPoints.size(); p++) {
 		ofNoFill();
-		ofDrawCircle(drawPoints[p], drawSize(ofToInt(getTime[p][1])));
+		ofDrawCircle(drawPoints[p], drawSize(ofToInt(getTime[p][1]), ofToInt(getTime[p][2])));
 		ofFill();
-		ofDrawCircle(drawPoints[p], 1 + (drawSize(ofToInt(getTime[p][1])) * .3));
+		ofDrawCircle(drawPoints[p], 1 + (drawSize(ofToInt(getTime[p][1]), ofToInt(getTime[p][2])) * .3));
 	}
 }
 
@@ -328,6 +399,8 @@ void ofApp::drawConnections() {
 
 	ofPoint drawSource;
 	ofPoint drawDestination;
+
+	mLines.clear();
 
 	string proto;
 	//ofSetColor(ofColor::green);
@@ -350,7 +423,10 @@ void ofApp::drawConnections() {
 			}
 		}
 
-		protocolLine(proto, drawSource, drawDestination);
+		protocolLine(proto);
+		mLines.addVertex(drawSource);
+		mLines.addVertex(drawDestination);
+		//mLines.addColor(ofRandom(255));
 
 	}
 }
@@ -359,11 +435,11 @@ void ofApp::killShark() {
 	ofSystem("Taskkill /IM tshark.exe /F");
 }
 
-int ofApp::drawSize(int capTime) {
+int ofApp::drawSize(int capTime, int scaler) {
 	int size;
 
 	if (ofGetElapsedTimeMillis() - capTime < 7000) {
-		size = 20 * sin(ofGetElapsedTimeMillis() - capTime);
+		size = 20 * sin(ofGetElapsedTimeMillis() - capTime); // removed this -> (scaler/totCaptures) needs to implement counting system
 	}
 	else {
 		size = 1;
@@ -372,44 +448,59 @@ int ofApp::drawSize(int capTime) {
 	return size;
 }
 
-void ofApp::protocolLine(string proto, ofPoint srcP, ofPoint dstP) {
+void ofApp::protocolLine(string proto) {
 	
 	//maybe divide these up by transport layer type?
 
 	if (proto == "DNS") {
-		ofSetColor(ofColor::red);
-		ofDrawLine(srcP, dstP);
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::green);
 	}
 	else if (proto == "TCP") {
-		ofSetColor(ofColor::green);
-		ofDrawLine(srcP, dstP);
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::blue);
+
 	}
 	else if (proto == "ARP") {
-		ofSetColor(ofColor::black);
-		ofDrawLine(srcP, dstP); //straight line
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::purple);
+
 	}
 	else if (proto == "DHCP") {
-		ofSetColor(ofColor::hotPink);
-		ofDrawLine(srcP, dstP);
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::yellow);
+
 	}
 	else if (proto == "UDP") {
-		ofSetColor(ofColor::yellow);
-		ofDrawLine(srcP, dstP);
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::black);
 	}
 	else if (proto == "HTTP" || proto == "HTTPS") {
-		ofSetColor(ofColor::purple);
-		ofDrawLine(srcP, dstP);
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::orange);
+
 	}
 	else if (proto == "SSL" || proto == "TLSv1.2") {
-		ofSetColor(ofColor::turquoise);
-		ofDrawLine(srcP, dstP);
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::pink);
+
 	}
 	else if (proto == "QUIC") {
-		ofSetColor(ofColor::tan);
-		ofDrawLine(srcP, dstP);
+		/*mLines.addVertex(srcP);
+		mLines.addVertex(dstP);*/
+		mLines.addColor(ofColor::lightBlue);
+
 	}
 	else {
-		ofSetColor(ofColor::blue);
-		ofDrawLine(srcP, dstP);
+		
+		mLines.addColor(255);
+
 	}
 }

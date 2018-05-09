@@ -72,7 +72,18 @@ public:
 
 	bool ringBool;
 
-	int drawSize(int capTime);
+	int totCaptures;
+	int amtRings;
+	int oldOffsetTime;
+	int drawSize(int capTime, int scaler);
 
-	void protocolLine(string proto, ofPoint srcP, ofPoint dstP);
+	void protocolLine(string proto);
+
+	int rotationSpeed;
+
+	ofFbo textFbo;
+
+	ofEasyCam cam;
+	ofMesh mesh;
+	ofMesh mLines;
 };
