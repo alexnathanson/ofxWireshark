@@ -81,12 +81,16 @@ void ofApp::draw() {
 	}
 
 	ofDrawBitmapString(amtIP + " total unique IP addresses", 20, 100);
+	ofDrawBitmapString("Ellapsed time: " + ofToString(ofGetElapsedTimeMillis()), 20, 140);
+	ofDrawBitmapString("Current offset time: " + ofToString(myShark.offsetTime), 20, 180);
+
+
 
 
 	if (hasPoints) {
 		//draw points
 		ofSetColor(ofColor::orangeRed);
-		drawPoints(ipPoint);
+		drawPoints(ipPoint, uIP);
 
 		//draw connections
 		ofSetColor(ofColor::green);
@@ -239,13 +243,6 @@ void ofApp::sortData() {
 
 	//should add in a way to reassamble things that we split by accident like multiword phrases inside of []
 	
-	/*
-	ofLogNotice("Test");
-	int teeest = 7;
-	for (int test = 0; test < dataLines[teeest].size(); test++) {
-		std::cout << dataLines[teeest][test] << endl;
-	}*/
-	
 }
 
 void ofApp::uniqueIP(vector< vector<string> > uipInput) {
@@ -253,20 +250,27 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 	int wIP;
 
 	//std::cout << uipInput[0][2] << endl;
-	//std::cout << uipInput[0][4] << endl;
+
+	//for uIP position [0] is IP address, position [1] is time, should position [2] be send or receive?
+	vector<string> tempIP;
 
 	//loop through input
 	for (int u1 = 0; u1 < uipInput.size(); u1++) {
 		//loop through existing ip and check against input
 		wIP = 2;
 		for (int u2 = 0; u2 < uIP.size(); u2++) {
-			if (uIP[u2] == uipInput[u1][2]) {
+			if (uIP[u2][0] == uipInput[u1][2]) {
 				isUnique = false;
+				//if not unique update time stamp
+				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000));
 				break;
 			}
 		}
 		if (isUnique) {
-			uIP.push_back(uipInput[u1][wIP]);
+			tempIP.clear();
+			tempIP.push_back(uipInput[u1][wIP]);
+			tempIP.push_back(ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000))); //tshark captures time as a float of seconds.
+			uIP.push_back(tempIP);
 
 			//set coordinates
 			int x = ofRandom(ofGetWidth());
@@ -279,13 +283,18 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 
 		wIP = 4;
 		for (int u2 = 0; u2 < uIP.size(); u2++) {
-			if (uIP[u2] == uipInput[u1][4]) {
+			if (uIP[u2][0] == uipInput[u1][4]) {
 				isUnique = false;
+				//if not unique update time stamp
+				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000));
 				break;
 			}
 		}
 		if (isUnique) {
-			uIP.push_back(uipInput[u1][wIP]);
+			tempIP.clear();
+			tempIP.push_back(uipInput[u1][wIP]);
+			tempIP.push_back(ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000)));
+			uIP.push_back(tempIP);
 
 			//set coordinates
 			int x = ofRandom(ofGetWidth());
@@ -301,19 +310,18 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 
 }
 
-void ofApp::drawPoints(vector <ofPoint> drawPoints) {
+void ofApp::drawPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime) {
 	for (int p = 0; p < drawPoints.size(); p++) {
 		ofNoFill();
-		ofDrawCircle(drawPoints[p], 20);
+		ofDrawCircle(drawPoints[p], drawSize(ofToInt(getTime[p][1])));
 		ofFill();
 		ofDrawEllipse(drawPoints[p], 10, 10);
 	}
 }
 
-void ofApp::drawStrings(vector <ofPoint> drawPoints) {
+void ofApp::drawStrings(vector<ofPoint> drawPoints) {
 	for (int p = 0; p < drawPoints.size(); p++) {
-		ofDrawBitmapString(uIP[p], drawPoints[p]);
-
+		ofDrawBitmapString(uIP[p][0], drawPoints[p]);
 	}
 }
 
@@ -327,7 +335,7 @@ void ofApp::drawConnections() {
 	for (int dc1 = 0; dc1 < dataLines.size(); dc1++) {
 		//get coordinates of source
 		for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
-			if (uIP[dc2] == dataLines[dc1][2]) {
+			if (uIP[dc2][0] == dataLines[dc1][2]) {
 				drawSource = ipPoint[dc2];
 				break;
 			}
@@ -335,7 +343,7 @@ void ofApp::drawConnections() {
 
 		//get coordinates of destination
 		for (int dc2 = 0; dc2 < uIP.size(); dc2++) {
-			if (uIP[dc2] == dataLines[dc1][4]) {
+			if (uIP[dc2][0] == dataLines[dc1][4]) {
 				drawDestination = ipPoint[dc2];
 				break;
 			}
@@ -348,4 +356,17 @@ void ofApp::drawConnections() {
 
 void ofApp::killShark() {
 	ofSystem("Taskkill /IM tshark.exe /F");
+}
+
+int ofApp::drawSize(int capTime) {
+	int size;
+
+	if (ofGetElapsedTimeMillis() - capTime < 5000) {
+		size = 20 * sin(ofGetElapsedTimeMillis() - capTime);
+	}
+	else {
+		size = 1;
+	}
+	
+	return size;
 }

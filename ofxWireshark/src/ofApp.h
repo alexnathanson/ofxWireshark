@@ -61,12 +61,16 @@ public:
 
 	void sortData();
 	void uniqueIP(vector< vector<string> > uipInput);
-	vector<string> uIP;
+
+	vector <vector<string> > uIP;
+
 	vector <ofPoint> ipPoint;
-	void drawPoints(vector <ofPoint> drawPoints);
-	void drawStrings(vector <ofPoint> drawPoints);
+
+	void drawPoints(vector <ofPoint> drawPoints, vector <vector <string> > getTime);
+	void drawStrings(vector<ofPoint> drawPoints);
 	void drawConnections();
 
 	bool ringBool;
 
+	int drawSize(int capTime);
 };

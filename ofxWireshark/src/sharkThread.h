@@ -33,6 +33,8 @@ public:
 
 	bool ringBool;
 
+	int offsetTime;
+
 	void setup(bool cB, int cO, bool ringB) {
 		ofLogNotice("Thread started");
 		//networkInterfaces = tsharkInterfaces();
@@ -59,6 +61,7 @@ public:
 		while (true) {
 			if (!startShark) {
 
+				offsetTime = ofGetElapsedTimeMillis();
 				tshark();
 
 				if (!ringBool) {
