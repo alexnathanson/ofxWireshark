@@ -1,5 +1,13 @@
 #include "ofApp.h"
 
+/*
+to do:
+- use ofDirectory to create a listener and watch for changes to the file
+- trying using the tshark reader to properly read pcap files, which would allow the proper ring buffer function in tshark
+- improve clustering
+- add filtering
+*/
+
 //--------------------------------------------------------------
 void ofApp::setup() {
 
@@ -186,9 +194,10 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'c':
 		dumClusterBool = !dumClusterBool;
+		//mesh.clear();//remove this
 		resetPoints(ipPoint);
 		break;
-	case ' ': //not needed with livecapture enabled
+	case ' ': //not needed with livecapture automatically enabled
 		//Open the Open File Dialog
 		ofFileDialogResult openFileResult = ofSystemLoadDialog("Select data file");
 
