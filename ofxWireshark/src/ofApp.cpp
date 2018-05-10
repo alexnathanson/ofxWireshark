@@ -1,14 +1,8 @@
 #include "ofApp.h"
 
-/*
-To Do:
-filtering
-animation
-visual differentation - sender/receiver, port, etc.
-*/
-
 //--------------------------------------------------------------
 void ofApp::setup() {
+
 	ofSetVerticalSync(true);
 
 	mesh.setMode(OF_PRIMITIVE_POINTS);
@@ -21,6 +15,8 @@ void ofApp::setup() {
 	glPointSize(10); // make the points bigger
 
 	threadOn = false;
+
+	dumClusterBool = false;
 
 	setupGui();
 
@@ -38,6 +34,7 @@ void ofApp::setup() {
 	ipPoint.clear();
 
 	amtRings = 0;
+	amtIP = "0";
 	oldOffsetTime = 0;
 
 	rotationSpeed = 60;
@@ -46,7 +43,6 @@ void ofApp::setup() {
 
 //--------------------------------------------------------------
 void ofApp::update() {
-
 
 	//if reading live data, check if file exists, and check flag
 	if (mode == 0) {
@@ -88,32 +84,45 @@ void ofApp::update() {
 //--------------------------------------------------------------
 void ofApp::draw() {
 
-	ofBackground(100, 100, 100);
+	ofBackground(115, 115, 115);
+
 
 	ofSetColor(ofColor::white);
-	ofDrawBitmapString("S to capture data. K to kill the capture process.", 20, 20);
+	ofDrawBitmapString("S to begin network sniffing", 20, 20);
 
-	if (mode) {
-		
-		//ofDrawBitmapString(interfacesList, 20, 60);
-		ofDrawBitmapString("Live Animation Mode", 20, 60);
-		//ofDrawBitmapString(systemResponse, 20, 400);
-	}
-	else {
-		ofDrawBitmapString("Ready to read data from file - Space bar to open file", 20, 60);
-	}
-	ofDrawBitmapString(ofToString(totCaptures) + " total captures", 20, 100);
-	ofDrawBitmapString(amtIP + " total unique IP addresses", 20, 140);
-	ofDrawBitmapString("Ellapsed time: " + ofToString(ofGetElapsedTimeMillis()), 20, 180);
-	ofDrawBitmapString("Current offset time: " + ofToString(myShark.offsetTime), 20, 220);
-
+	//if (mode) {
+	//	
+	//	//ofDrawBitmapString(interfacesList, 20, 60);
+	//	ofDrawBitmapString("Live Animation Mode", 20, 60);
+	//}
+	//else {
+	//	ofDrawBitmapString("Ready to read data from file - Space bar to open file", 20, 60);
+	//}
+	ofDrawBitmapString("Press h to show/ hide additional info", 20, 50);
+	
+	int captInt = captureSize;
 	if (showGui) {
-		gui.draw();
+		ofDrawBitmapString(ofToString(totCaptures) + " total captures", 20, 80);
+		ofDrawBitmapString(amtIP + " total unique IP addresses", 20, 110);
+		ofDrawBitmapString("Ellapsed time: " + ofToString(ofGetElapsedTimeMillis()), 20, 140);
+		ofDrawBitmapString("Current offset time: " + ofToString(myShark.offsetTime), 20, 170);
+		ofDrawBitmapString("r = reset points, c = clustering", 20, 200);
+		ofDrawBitmapString("Ring Buffer Capture Size: " + ofToString(captInt), 20, 230);
 	}
+
+
+
+
+	//GUI does not display properly with depth enabled.
+	//if (showGui) {
+	//	gui.draw();
+	//}
 
 	cam.begin();
 
-	ofRotateY((ofGetElapsedTimeMillis() / rotationSpeed) % 360);
+	if (!dumClusterBool) {
+		ofRotateY((ofGetElapsedTimeMillis() / rotationSpeed) % 360);
+	}
 
 	ofTranslate(-ofGetWidth() / 2, -ofGetHeight() / 2);
 	//ofScale(2, 2, 2); // flip the y axis and zoom in a bit
@@ -134,7 +143,7 @@ void ofApp::draw() {
 	mLines.draw();
 	
 	cam.end();
-	
+
 }
 
 
@@ -169,21 +178,17 @@ void ofApp::keyPressed(int key) {
 		//kill the capture process;
 		killShark();
 		break;
-	case 'p':
-		myShark.pingTest();
-		myShark.startShark = false;
+	case 'r':
+		resetPoints(ipPoint);
 		break;
-	/*case 'r':
-		myData.startThread();
-		break;*/
 	case 'h':
 		showGui = !showGui;
 		break;
-	/*case OF_KEY_ESC:
-		uIP.clear();
-		ipPoint.clear();
-		break;*/
-	case ' ':
+	case 'c':
+		dumClusterBool = !dumClusterBool;
+		resetPoints(ipPoint);
+		break;
+	case ' ': //not needed with livecapture enabled
 		//Open the Open File Dialog
 		ofFileDialogResult openFileResult = ofSystemLoadDialog("Select data file");
 
@@ -247,6 +252,9 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000)); //timecode + offset
 				uIP[u2][2] = uipInput[u1][5]; //protocol
 				uIP[u2][3] = uipInput[u1][4]; //destination
+				if (dumClusterBool) {
+					ipPoint[u2] = dumbClustering(uipInput[u1]);
+				}
 				break;
 			}
 		}
@@ -258,17 +266,26 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 			tempIP.push_back(uipInput[u1][4]); //destination
 			uIP.push_back(tempIP);
 
-			//set coordinates
-			int x = ofRandom(ofGetWidth());
-			int y = ofRandom(ofGetHeight());
-			int z = 300 - ofRandom(600);
+			ofPoint thisPoint;
+
+			if (dumClusterBool) {
+				//ofPoint thisPoint(x, y, z);
+				thisPoint.set(dumbClustering(uipInput[u1]));
+			}
+			else {
+				//set coordinates
+				int x = ofRandom(ofGetWidth());
+				int y = ofRandom(ofGetHeight());
+				int z = 300 - ofRandom(600);
+
+				thisPoint.set(x, y, z);
+			}
+
+			ipPoint.push_back(thisPoint);
 
 			mesh.addColor(ofColor::red);
-			ofVec3f pos(x, y, z);
-			mesh.addVertex(pos);
-
-			ofPoint thisPoint(x, y, z);
-			ipPoint.push_back(thisPoint);
+			//ofVec3f pos(x, y, z);
+			mesh.addVertex(thisPoint);
 		}
 		isUnique = true;	
 
@@ -280,6 +297,9 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 				uIP[u2][1] = ofToString(myShark.offsetTime + (ofToInt(uipInput[u1][1]) * 1000));
 				uIP[u2][2] = uipInput[u1][5]; //protocol
 				uIP[u2][3] = "x"; //destination
+				if (dumClusterBool) {
+					ipPoint[u2] = dumbClustering(uipInput[u1]);
+				}
 				break;
 			}
 		}
@@ -291,19 +311,34 @@ void ofApp::uniqueIP(vector< vector<string> > uipInput) {
 			tempIP.push_back("x"); //destination
 			uIP.push_back(tempIP);
 
-			//set coordinates
-			int x = ofRandom(ofGetWidth());
-			int y = ofRandom(ofGetHeight());
-			int z = 300 - ofRandom(600);
+			ofPoint thisPoint;
+
+			if (dumClusterBool) {
+				//ofPoint thisPoint(x, y, z);
+				thisPoint.set(dumbClustering(uipInput[u1]));
+			}
+			else {
+				//set coordinates
+				int x = ofRandom(ofGetWidth());
+				int y = ofRandom(ofGetHeight());
+				int z = 300 - ofRandom(600);
+
+				thisPoint.set(x, y, z);
+			}
+
+			ipPoint.push_back(thisPoint);
 
 			mesh.addColor(ofColor::red);
-			ofVec3f pos(x, y, z);
-			mesh.addVertex(pos);
+			//ofVec3f pos(x, y, z);
+			mesh.addVertex(thisPoint);
 
-			ofPoint thisPoint(x, y, z);
-			ipPoint.push_back(thisPoint);
+			
 		}
 		isUnique = true;
+	}
+
+	if (dumClusterBool) {
+		resetPointCloud();
 	}
 
 	amtIP = ofToString(uIP.size());
@@ -423,4 +458,59 @@ void ofApp::protocolLine(string proto) {
 	else {	
 		mLines.addColor(255);
 	}
+}
+
+void ofApp::resetPoints(vector < ofPoint> oldPoints) {
+
+	ipPoint.clear();
+
+	//reset point cloud
+	mesh.clear();
+
+	for (int newP = 0; newP < oldPoints.size() ; newP++) {
+		int x = ofRandom(ofGetWidth());
+		int y = ofRandom(ofGetHeight());
+		int z = 300 - ofRandom(600);
+
+		ofPoint thisPoint(x, y, z);
+		ipPoint.push_back(thisPoint);
+
+		mesh.addColor(ofColor::red);
+		//ofVec3f pos(x, y, z);
+		mesh.addVertex(thisPoint);
+	}
+
+}
+
+void ofApp::resetPointCloud() {
+	mesh.clear();
+
+	for (int rPC = 0; rPC < ipPoint.size(); rPC ++) {
+		mesh.addColor(ofColor::red);
+		//ofVec3f pos(x, y, z);
+		mesh.addVertex(ipPoint[rPC]);
+	}
+}
+
+ofPoint ofApp::dumbClustering(vector<string> clusterInput) {
+
+	int protocolMult = 1;
+
+	//std::cout << clusterInput[5] << endl;
+
+	if (clusterInput[5] == "UDP" || clusterInput[5] == "TCP"){
+		protocolMult = 2;
+	} else if(clusterInput[5] == "HTTP" || clusterInput[5] == "HTTPS" || clusterInput[5] == "SSL"){
+		protocolMult = 3;
+	}
+	else if (clusterInput[5] == "DNS" || clusterInput[5] == "DHCP") {
+		protocolMult = 4;
+	}
+
+	int x = ofRandom(ofGetWidth() / 4) * protocolMult;
+	int y = ofRandom(ofGetHeight() / 4) * protocolMult;
+	int z = 300 - ((ofRandom(600) / 4) * protocolMult);
+
+	ofPoint thisCluster(x, y, z);
+	return thisCluster;
 }

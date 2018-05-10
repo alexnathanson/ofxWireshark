@@ -70,7 +70,19 @@ public:
 
 	int rotationSpeed;
 
+	bool dumClusterBool;
+
 	ofEasyCam cam;
 	ofMesh mesh;
 	ofMesh mLines;
+
+	float vx, vy, vz, va, vb;
+
+	//void mouseMoved(int x, int y);
+	//void sendWek(int wx, int wy);
+
+	ofPoint dumbClustering(vector<string> clusterInput);
+	void resetPointCloud();
+
+	void resetPoints(vector< ofPoint> oldPoints);
 };
